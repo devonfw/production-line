@@ -1,0 +1,1 @@
+image::doc/images/devonfw.png[DevonFW Logo]
