@@ -2,4 +2,4 @@
 
 import com.capgemini.productionline.configuration.*
 
-JenkinsConfiguration jenkins = new JenkinsConfiguration();
+Jenkins jenkins = new Jenkins();
