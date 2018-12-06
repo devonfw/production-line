@@ -11,7 +11,7 @@ pipeline {
     
     //Jenkins Job Parameters
     parameters { 
-        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: '', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'wdWeuWznXNA2WXsy1z9D', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
@@ -24,7 +24,7 @@ pipeline {
             steps{
                 script{
                     //Create a new repository for MyThaiStar inside the Production Line
-                    gitlabConfiguration.createProject(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME, "test", params.GITLAB_CREATE_PROJECT_DESCRIPTION, params.GITLAB_CREATE_BRANCH)
+                    gitlabConfiguration.createProject(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME, parmas.GITLAB_CREATE_PROJECT_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, params.GITLAB_CREATE_BRANCH)
                 }
             }
         }
