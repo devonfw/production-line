@@ -1,1 +1,5 @@
 @Library('pdehnel-sharedlib@feature/devon4j')
+
+import com.capgemini.productionline.configuration.*
+
+JenkinsConfiguration jenkins = new JenkinsConfiguration();
