@@ -22,9 +22,10 @@ pipeline {
     stages {
         stage('PL preparation') {
             steps{
-                //Create a new repository for MyThaiStar inside the Production Line
-                gitlabConfiguration.createProject(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME, "test", params.GITLAB_CREATE_PROJECT_DESCRIPTION, params.GITLAB_CREATE_BRANCH)
-
+                script{
+                    //Create a new repository for MyThaiStar inside the Production Line
+                    gitlabConfiguration.createProject(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME, "test", params.GITLAB_CREATE_PROJECT_DESCRIPTION, params.GITLAB_CREATE_BRANCH)
+                }
             }
         }
 
