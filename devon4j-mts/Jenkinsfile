@@ -3,3 +3,27 @@
 import com.capgemini.productionline.configuration.*
 
 Jenkins jenkins = new Jenkins();
+
+pipeline {
+    agent any
+
+    stages {
+        stage('PL preparation') {
+            steps{
+
+            }
+        }
+
+        stage('Clone MyThaiStar to PL'){
+            steps{
+
+            }
+        }
+
+        stage('Generate build and deploy jobs in Jenkins'){
+            steps{
+
+            }
+        }
+    }
+}
