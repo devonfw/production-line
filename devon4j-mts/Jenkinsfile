@@ -4,6 +4,7 @@
 import com.capgemini.productionline.configuration.*
 Jenkins jenkinsConfiguration = new Jenkins();
 GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN);
+ProductionLineGlobals globals = new ProductionLineGlobals();
 
 
 pipeline {
@@ -23,28 +24,51 @@ pipeline {
         stage('PL preparation') {
             steps{
                 script{
+                    //Create a group for devon
+                    // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
+                    gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
+
                     //Create a new public repository for MyThaiStar inside the Production Line based on the official repository
-                    gitlabConfiguration.createProject(params.GITLAB_CREATE_GROUP_NAME, 
-                    params.GITLAB_CREATE_PROJECT_NAME, 
-                    params.GITLAB_CREATE_PROJECT_NAME, 
-                    params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
-                    params.GITLAB_CREATE_BRANCH, 
-                    "https://github.com/devonfw/my-thai-star.git",
-                    "public")
-
+                    gitlabConfiguration.createProject(
+                        params.GITLAB_CREATE_GROUP_NAME, 
+                        params.GITLAB_CREATE_PROJECT_NAME, 
+                        params.GITLAB_CREATE_PROJECT_NAME, 
+                        params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
+                        params.GITLAB_CREATE_BRANCH, 
+                        "https://github.com/devonfw/my-thai-star.git",
+                        "public"
+                        )
                 }
-            }
-        }
-
-        stage('Clone MyThaiStar to PL'){
-            steps{
-                print "test"
             }
         }
 
         stage('Generate build and deploy jobs in Jenkins'){
             steps{
-                print "test"
+                //Build job
+                pipelineJob("MyThaiStar_FRONTEND_BUILD") {
+                    definition {
+                        cpsScm {
+                            scm {
+                                git(globals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
+                                scriptPath('jenkins/angular/cicd/Jenkinsfile')
+                            }
+                        }
+                    }
+                }
+                //Build job
+                pipelineJob("MyThaiStar_SERVER_BUILD") {
+                    definition {
+                        cpsScm {
+                            scm {
+                                git(globals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
+                                scriptPath('jenkins/java/cicd/Jenkinsfile')
+                            }
+                        }
+                    }
+                }
+
+                //Deploy job
+
             }
         }
     }
