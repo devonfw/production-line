@@ -22,14 +22,14 @@ pipeline {
             steps{
                 script{
 
-                    if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) != ""){
+                    if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
                         //Create a group for devon
                         // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
                         gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
                     }
 
 
-                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) != ""){
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
                         //Create a new public repository for MyThaiStar inside the Production Line based on the official repository
                         gitlabConfiguration.createProject(
                             params.GITLAB_CREATE_GROUP_NAME, 
