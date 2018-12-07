@@ -50,7 +50,7 @@ pipeline {
                                                             definition {
                                                                 cpsScm {
                                                                     scm {
-                                                                        git(ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
+                                                                        git('''+ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME+''')
                                                                         scriptPath(\'jenkins/angular/cicd/Jenkinsfile\')
                                                                     }
                                                                 }
@@ -63,7 +63,7 @@ pipeline {
                                             definition {
                                                 cpsScm {
                                                 scm {
-                                                    git(ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
+                                                    git('''+ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME+''')
                                                     scriptPath(\'jenkins/java/cicd/Jenkinsfile\')
                                                 }
                                                 }
