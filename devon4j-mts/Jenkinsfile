@@ -54,8 +54,8 @@ pipeline {
                                     scm {
                                         git {
                                             remote {
-                                                
-                                                url("""+ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME+""")
+
+                                                url(${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME})
                                             }
                                             branches('master')
                                             scriptPath('jenkins/angular/cicd/Jenkinsfile')
