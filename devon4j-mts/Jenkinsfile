@@ -15,7 +15,6 @@ pipeline {
         string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample Devon4J application', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
-
     }
     
     stages {
@@ -43,7 +42,7 @@ pipeline {
         stage('Generate build and deploy jobs in Jenkins'){
             steps{
                 //Build job
-                jobDsl sandbox: true, scriptText: '''pipelineJob("MyThaiStar_FRONTEND_BUILD") {
+                jobDsl scriptText: '''pipelineJob("MyThaiStar_FRONTEND_BUILD") {
                                                         definition {
                                                             cpsScm {
                                                                 scm {
