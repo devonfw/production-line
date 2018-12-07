@@ -41,7 +41,7 @@ pipeline {
         }
 
         stage('Generate build and deploy jobs in Jenkins'){
-            steps{
+            //steps{
                 //Build job
                 pipelineJob("MyThaiStar_FRONTEND_BUILD") {
                     definition {
@@ -67,7 +67,7 @@ pipeline {
 
                 //Deploy job
 
-            }
+            //}
         }
     }
 }
