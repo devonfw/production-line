@@ -55,7 +55,7 @@ pipeline {
                     //Build job
                     jobDsl scriptText: """
                         pipelineJob("MyThaiStar_FRONTEND_BUILD") {
-                            description('')
+                            description('Build job for MyThaiStar sample devon application. Frontend component.')
                             definition {
                                 cpsScm {
                                     scm {
@@ -75,18 +75,30 @@ pipeline {
 
 
                     //Build job
-                    jobDsl scriptText: """pipelineJob("MyThaiStar_SERVER_BUILD") {
-                                            definition {
-                                                cpsScm {
-                                                    scm {
-                                                        git('''+ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME+''')
-                                                        scriptPath(\'jenkins/java/cicd/Jenkinsfile\')
-                                                    }
-                                                }
-                                            }
-                                        }"""
 
-                    //Deploy job
+                    jobDsl scriptText: """
+                        pipelineJob("MyThaiStar_SERVER_BUILD") {
+                            description('Build job for MyThaiStar sample devon application. Server component.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}')
+                                            }
+                                            branches('master')
+                                            scriptPath('jenkins/java/cicd/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+                    //Deploy jobs
+
+                    //TODO
 
 
                     //Enable Job Security again
