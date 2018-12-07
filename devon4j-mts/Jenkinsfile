@@ -63,7 +63,7 @@ pipeline {
                                             remote {
                                                 url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
                                             }
-                                            branches('master')
+                                            branches('develop')
                                             scriptPath('jenkins/angular/cicd/Jenkinsfile')
                                             extensions { }  // required as otherwise it may try to tag the repo!
                                         }
@@ -86,7 +86,7 @@ pipeline {
                                             remote {
                                                 url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
                                             }
-                                            branches('master')
+                                            branches('develop')
                                             scriptPath('jenkins/java/cicd/Jenkinsfile')
                                             extensions { }  // required as otherwise it may try to tag the repo!
                                         }
