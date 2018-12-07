@@ -46,7 +46,7 @@ pipeline {
                     jenkinsConfiguration.disableJobDSLScriptSecurity()
 
                     //Build job
-                    jobDsl scriptText: '''
+                    jobDsl scriptText: """
                         pipelineJob("MyThaiStar_FRONTEND_BUILD") {
                             description('')
                             definition {
@@ -54,7 +54,8 @@ pipeline {
                                     scm {
                                         git {
                                             remote {
-                                                url('''+ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME+''')
+                                                
+                                                url("""+ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME+""")
                                             }
                                             branches('master')
                                             scriptPath('jenkins/angular/cicd/Jenkinsfile')
@@ -64,11 +65,11 @@ pipeline {
                                 }
                             }
                         }
-                        '''
+                        """
 
 
                     //Build job
-                    jobDsl scriptText: '''pipelineJob("MyThaiStar_SERVER_BUILD") {
+                    jobDsl scriptText: """pipelineJob("MyThaiStar_SERVER_BUILD") {
                                             definition {
                                                 cpsScm {
                                                     scm {
@@ -77,7 +78,7 @@ pipeline {
                                                     }
                                                 }
                                             }
-                                        }'''
+                                        }"""
 
                     //Deploy job
 
