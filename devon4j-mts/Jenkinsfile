@@ -43,7 +43,7 @@ pipeline {
         stage('Generate build and deploy jobs in Jenkins'){
             steps{
                 //Build job
-                job("MyThaiStar_FRONTEND_BUILD") {
+                workflowJob("MyThaiStar_FRONTEND_BUILD") {
                     definition {
                         cpsScm {
                             scm {
@@ -54,7 +54,7 @@ pipeline {
                     }
                 }
                 //Build job
-                job("MyThaiStar_SERVER_BUILD") {
+                workflowJob("MyThaiStar_SERVER_BUILD") {
                     definition {
                         cpsScm {
                             scm {
