@@ -21,14 +21,15 @@ pipeline {
         stage('PL preparation') {
             steps{
                 script{
-
+                    
+                    //Check if group already exists
                     if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
                         //Create a group for devon
                         // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
                         gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
                     }
 
-
+                    //Check if project already exists
                     if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
                         //Create a new public repository for MyThaiStar inside the Production Line based on the official repository
                         gitlabConfiguration.createProject(
@@ -60,7 +61,7 @@ pipeline {
                                     scm {
                                         git {
                                             remote {
-                                                url(test/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME})
+                                                url("http://gitlab-core")
                                             }
                                             branches('master')
                                             scriptPath('jenkins/angular/cicd/Jenkinsfile')
