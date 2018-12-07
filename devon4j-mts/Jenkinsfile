@@ -41,39 +41,41 @@ pipeline {
 
         stage('Generate build and deploy jobs in Jenkins'){
             steps{
-                //Disable Job Security
-                jenkinsConfiguration.disableJobDSLScriptSecurity()
+                script{
+                    //Disable Job Security
+                    jenkinsConfiguration.disableJobDSLScriptSecurity()
 
-                //Build job
-                jobDsl scriptText: '''pipelineJob("MyThaiStar_FRONTEND_BUILD") {
-                                                        definition {
-                                                            cpsScm {
-                                                                scm {
-                                                                    git(ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
-                                                                    scriptPath(\'jenkins/angular/cicd/Jenkinsfile\')
+                    //Build job
+                    jobDsl scriptText: '''pipelineJob("MyThaiStar_FRONTEND_BUILD") {
+                                                            definition {
+                                                                cpsScm {
+                                                                    scm {
+                                                                        git(ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
+                                                                        scriptPath(\'jenkins/angular/cicd/Jenkinsfile\')
+                                                                    }
                                                                 }
                                                             }
-                                                        }
-                                                    }'''
+                                                        }'''
 
 
-                //Build job
-                jobDsl scriptText: '''pipelineJob("MyThaiStar_SERVER_BUILD") {
-                                        definition {
-                                            cpsScm {
-                                            scm {
-                                                git(ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
-                                                scriptPath(\'jenkins/java/cicd/Jenkinsfile\')
+                    //Build job
+                    jobDsl scriptText: '''pipelineJob("MyThaiStar_SERVER_BUILD") {
+                                            definition {
+                                                cpsScm {
+                                                scm {
+                                                    git(ProductionLineGlobals.GITLAB_BASE_URL+"/"+params.GITLAB_CREATE_GROUP_NAME+"/"+params.GITLAB_CREATE_PROJECT_NAME)
+                                                    scriptPath(\'jenkins/java/cicd/Jenkinsfile\')
+                                                }
+                                                }
                                             }
-                                            }
-                                        }
-                                    }'''
+                                        }'''
 
-                //Deploy job
+                    //Deploy job
 
 
-                //Enable Job Security again
-                jenkinsConfiguration.enableJobDSLScriptSecurity()
+                    //Enable Job Security again
+                    jenkinsConfiguration.enableJobDSLScriptSecurity()
+                }
             }
         }
     }
