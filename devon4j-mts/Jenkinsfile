@@ -21,20 +21,26 @@ pipeline {
         stage('PL preparation') {
             steps{
                 script{
-                    //Create a group for devon
-                    // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
-                    gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
 
-                    //Create a new public repository for MyThaiStar inside the Production Line based on the official repository
-                    gitlabConfiguration.createProject(
-                        params.GITLAB_CREATE_GROUP_NAME, 
-                        params.GITLAB_CREATE_PROJECT_NAME, 
-                        params.GITLAB_CREATE_PROJECT_NAME, 
-                        params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
-                        params.GITLAB_CREATE_BRANCH, 
-                        "https://github.com/devonfw/my-thai-star.git",
-                        "public"
+                    if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) != ""{
+                        //Create a group for devon
+                        // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
+                        gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
+                    }
+
+
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) != null){
+                        //Create a new public repository for MyThaiStar inside the Production Line based on the official repository
+                        gitlabConfiguration.createProject(
+                            params.GITLAB_CREATE_GROUP_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
+                            params.GITLAB_CREATE_BRANCH, 
+                            "https://github.com/devonfw/my-thai-star.git",
+                            "public"
                         )
+                    }
                 }
             }
         }
