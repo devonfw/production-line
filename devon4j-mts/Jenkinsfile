@@ -15,6 +15,8 @@ pipeline {
         string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample Devon4J application', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CLONE_URL', defaultValue: 'https://github.com/devonfw/my-thai-star.git', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+
     }
     
     stages {
@@ -38,7 +40,7 @@ pipeline {
                             params.GITLAB_CREATE_PROJECT_NAME, 
                             params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
                             params.GITLAB_CREATE_BRANCH, 
-                            "https://github.com/devonfw/my-thai-star.git",
+                            params.GITLAB_CLONE_URL,
                             "public"
                         )
                     }
