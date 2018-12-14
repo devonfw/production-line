@@ -109,7 +109,7 @@ pipeline {
                     //Frontend Only
                     jobDsl scriptText: """
                         pipelineJob("MTS/MyThaiStar_FRONTEND_DEPLOY") {
-                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            description('Deploy job for MyThaiStar Frontend Only.')
                             definition {
                                 cpsScm {
                                     scm {
@@ -131,7 +131,7 @@ pipeline {
                     //Backend only
                     jobDsl scriptText: """
                         pipelineJob("MTS/MyThaiStar_SERVER_DEPLOY") {
-                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            description('Deploy job for MyThaiStar Backend only.')
                             definition {
                                 cpsScm {
                                     scm {
@@ -152,8 +152,8 @@ pipeline {
                     //Deploy jobs
                     //Both at once
                     jobDsl scriptText: """
-                        pipelineJob("MTS/MyThaiStar_DEPLOY") {
-                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                        pipelineJob("MTS/MyThaiStar_DEPLOY-Together") {
+                            description('Deployment Pipeline for both Frontend and Backend at the same time.')
                             definition {
                                 cpsScm {
                                     scm {
