@@ -1,0 +1,79 @@
+@Library('pdehnel-sharedlib@feature/devon4j') _
+import com.capgemini.productionline.configuration.*
+
+Jenkins jenkinsConfiguration = new Jenkins();
+GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN)
+
+pipeline{
+
+    agent any
+
+    //Jenkins Job Parameters
+    parameters { 
+        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: '', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MrChecker2', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'automation test framework', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+    }
+
+    stages {
+        stage('Create Gitlab repo') {
+            steps{
+                script{ 
+                    //Check if group already exists
+                    if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
+                        //Create a group for devon
+                        // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
+                        gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
+                    }
+
+                    //Check if project already exists
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
+                        //Create a new public repository for MrChecker inside the Production Line based on the official repository
+                        gitlabConfiguration.createProject(
+                            params.GITLAB_CREATE_GROUP_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
+                            params.GITLAB_CREATE_BRANCH, 
+                            "https://github.com/kpanter/devonfw-testing.git",
+                            "public"
+                        )
+                    }
+                }
+            }
+        }
+     
+
+        stage('Create MrChecker Jenkins Job'){
+            steps{
+                script{
+                    //Disable Job Security
+                    jenkinsConfiguration.disableJobDSLScriptSecurity()
+
+                    //Build job
+                    jobDsl scriptText: """
+                        pipelineJob("MrChecker_Example_Tests") {
+                            description('Execute MrChecker example tests')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('*/develop')
+                                            scriptPath('mrchecker-app-under-test/pipelines/CI/Jenkinsfile_node.groovy')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+                }
+            }
+        }
+    }
+}
