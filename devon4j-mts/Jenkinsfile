@@ -56,7 +56,7 @@ pipeline {
 
                     //Build job
                     jobDsl scriptText: """
-                        pipelineJob("MyThaiStar_FRONTEND_BUILD") {
+                        pipelineJob("MTS/MyThaiStar_FRONTEND_BUILD") {
                             description('Build job for MyThaiStar sample devon application. Frontend component.')
                             definition {
                                 cpsScm {
@@ -79,7 +79,7 @@ pipeline {
                     //Build job
 
                     jobDsl scriptText: """
-                        pipelineJob("MyThaiStar_SERVER_BUILD") {
+                        pipelineJob("MTS/MyThaiStar_SERVER_BUILD") {
                             description('Build job for MyThaiStar sample devon application. Server component.')
                             definition {
                                 cpsScm {
