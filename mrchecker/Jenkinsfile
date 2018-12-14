@@ -12,7 +12,7 @@ pipeline{
     parameters { 
         string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: '', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
-        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MrChecker2', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MrChecker', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'automation test framework', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
     }
