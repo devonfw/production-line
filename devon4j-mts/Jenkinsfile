@@ -106,9 +106,70 @@ pipeline {
                         """
 
                     //Deploy jobs
+                    //Frontend Only
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_FRONTEND_DEPLOY") {
+                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/angular/deployment/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
 
-                    //TODO
+                    //Deploy jobs
+                    //Backend only
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_SERVER_DEPLOY") {
+                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/java/deployment/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
 
+                    //Deploy jobs
+                    //Both at once
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_DEPLOY") {
+                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/deployment/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
 
                     //Enable Job Security again
                     jenkinsConfiguration.enableJobDSLScriptSecurity()
