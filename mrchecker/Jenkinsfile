@@ -38,6 +38,7 @@ pipeline{
                             params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
                             params.GITLAB_CREATE_BRANCH, 
                             "https://github.com/kpanter/devonfw-testing.git",
+                            //Will be changed to https://github.com/devonfw/devonfw-testing.git after merge
                             "public"
                         )
                     }
