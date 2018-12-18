@@ -35,6 +35,10 @@ Go to your Profile in Gitlab +
 
 image::./images/profile.png[500,400]
 
+Next click on the pen icon +
+
+image::./images/pen.png[500,400]
+
 On the left menu choose Access Tokens and put token name and check fields like below +
 
 image::./images/token.JPG[600,500]
