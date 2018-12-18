@@ -79,8 +79,8 @@ image::./images/allure_report.JPG[500,400]
 Using this documentation you should be able to run MrChercker test framework on ProductionLine. +
 MrChecker offers two projects to your disposal: +
 
-* First project "mrchecker-app-under-test/pipelines/CI/Jenkinsfile_node.groovy" has all tests included in the project and is the default project used in "MrChecker_Example_Tests" job. +
-* Second project "mrchecker-app-under-testboilerplate/pipelines/CI/Jenkinsfile_node.groovy" here tests are not included, therefore if you choose to run "MrChecker_Example_Tests" job Allure report will be not generated. +
+* First project "mrchecker-app-under-test/pipelines/CI/Jenkinsfile_ProductionLine.groovy" has all tests included in the project and is the default project used in "MrChecker_Example_Tests" job. +
+* Second project "mrchecker-app-under-testboilerplate/pipelines/CI/Jenkinsfile_ProductionLine.groovy" here tests are not included, therefore if you choose to run "MrChecker_Example_Tests" job Allure report will be not generated. +
 
 To change the project change script path at the bottom of the "MrChecker_Example_Tests" job.
 
