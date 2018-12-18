@@ -28,8 +28,13 @@ pipeline {
                 script{
                     
                     //Install the required Jenkins plugins
-                    jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven"])
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven"])
                     
+                    if( pluginsHaveBeenInstalled ) {
+                        // We need to restart Jenkins in case new plugins have been installed.
+                        jenkinsConfiguration.restart(true);
+                    }
+
                     //Add the required custom tools
                     
                     
