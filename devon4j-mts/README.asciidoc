@@ -40,6 +40,9 @@ The creation of the GitLab Group and Project will require a GitLab token which h
 The GitLab API user needs to have API access and the rights to create a new group.
 ====
 
+Technical Nexus user 
+*TODO
+
 In case you want to use the deployment jobs, make sure you:
 * Have an additional test-server (a PL does not include a test environment, so a separate Linux machine is required)
 ** SSH access should be available through an SSH-RSA key
