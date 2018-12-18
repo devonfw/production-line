@@ -2,6 +2,8 @@
 
 //Sharedlibrary configuration
 import com.capgemini.productionline.configuration.*
+
+Nexus nexusConfiguration = new Nexus();
 Jenkins jenkinsConfiguration = new Jenkins();
 GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN);
 
@@ -20,7 +22,27 @@ pipeline {
     }
     
     stages {
-        stage('PL preparation') {
+        
+         stage('PL setup') {
+            steps{
+                script{
+                    
+                    //Install the required Jenkins plugins
+                    jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven"])
+                    
+                    //Add the required custom tools
+                    
+                    
+                    //Add the required script approval
+                    
+                    
+                    //Add the global maven settings credential
+                    
+                }
+            }
+        }
+        
+        stage('Clone repo') {
             steps{
                 script{
                     
