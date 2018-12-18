@@ -27,6 +27,19 @@ To use the template you need to make that:
 ** GitLab (required as a repostiory)
 ** Nexus (required to store the build artifacts)
 
+[TIP]
+====
+Additional components can be ordered from the ProductionLine service team.
+====
+
+The creation of the GitLab Group and Project will require a GitLab token which has to be provided manually. The token has to be created by:
+* TODO
+
+[IMPORTANT]
+====
+The GitLab API user needs to have API access and the rights to create a new group.
+====
+
 In case you want to use the deployment jobs, make sure you:
 * Have an additional test-server (a PL does not include a test environment, so a separate Linux machine is required)
 ** SSH access should be available through an SSH-RSA key
