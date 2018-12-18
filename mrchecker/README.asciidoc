@@ -1,0 +1,83 @@
+= MrChecker under ProductionLine
+
+image::./images/mrchecker&pl.JPG[500,400]
+
+== Introduction
+MrChecker is end to end automation test framework written in Java. It has been released
+by Devon team which also is responsible for support of this framework. +
+
+This framework consist of eight test modules:
+
+* Core test module +
+* Selenium test module +
+* WebAPI test module +
+* Security test module +
+* DataBase test module +
+* Standalone test module +
+* DevOps module +
+
+== Prerequisites
+To be able to run Jenkins MrChecker job under ProductionLine you need to configure below settings in Jenkins and Gitlab
+
+* Jenkins +
+** Install required plugins: +
+HTTP Request Plugin +
+Allure Jenkins Plugin +
+** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
+
+image::./images/allure.JPG[500,400]
+image::./images/maven.JPG[500,400]
+
+
+* Gitlab +
+** Generate User Private Token +
+Go to your Profile in Gitlab +
+
+image::./images/profile.png[500,400]
+
+On the left menu choose Access Tokens and put token name and check fields like below +
+
+image::./images/token.JPG[600,500]
+
+Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
+
+image::./images/created_token.JPG[600,500]
+
+
+== How to insert the Template
+
+* Create new Jenkins Pipeline Job
+* In job configuration check "This project is parametrized", choose "String parameter and provide +
+Name: GITLAB_USER_PRIVATE_TOKEN +
+Default Value: <GITLAB_TOKEN_STRING_YOU_JUST_CREATED>
+
+* At the bottom of the job configuration for pipeline Definition choose: Pipeline script +
+* Copy the Jenkinsfile content +
+* Save job configuration
+
+== How to run the Template
+
+* Build the job
+* After job ends with success wait few seconds for repository import to Gitlab
+* As output of the build new Jenkins Pipline job is created with name "MrChecker_Example_Tests" also new repository "Mrchecker" will be created in Gitlab
+* Build "MrChecker_Example_Tests" job
+
+image::./images/pljob.JPG[500,400]
+
+== Expected Result
+
+* As output of this job Allure Report will be generated
+
+image::./images/allure_report.JPG[500,400]
+
+== Summary
+
+Using this documentation you should be able to run MrChercker test framework on ProductionLine. +
+MrChecker offers two projects to your disposal: +
+
+* First project "mrchecker-app-under-test/pipelines/CI/Jenkinsfile_node.groovy" has all tests included in the project and is the default project used in "MrChecker_Example_Tests" job. +
+* Second project "mrchecker-app-under-testboilerplate/pipelines/CI/Jenkinsfile_node.groovy" here tests are not included, therefore if you choose to run "MrChecker_Example_Tests" job Allure report will be not generated. +
+
+To change the project change script path at the bottom of the "MrChecker_Example_Tests" job.
+
+image::./images/pipeline_script.JPG[500,400]
