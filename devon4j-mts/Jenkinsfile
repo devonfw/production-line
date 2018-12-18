@@ -33,7 +33,7 @@ pipeline {
                     if( pluginsHaveBeenInstalled ) {
                         // We need to restart Jenkins in case new plugins have been installed.
                         //if set to false, then do a force restart
-                        jenkinsConfiguration.restart(false);
+                        jenkinsConfiguration.restartJenkins(false);
                     }
 
                     //Add the required custom tools
