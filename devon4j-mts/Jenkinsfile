@@ -3,7 +3,7 @@
 //Sharedlibrary configuration
 import com.capgemini.productionline.configuration.*
 
-Nexus nexusConfiguration = new Nexus();
+//Nexus nexusConfiguration = new Nexus();
 Jenkins jenkinsConfiguration = new Jenkins();
 GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN);
 
