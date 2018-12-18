@@ -28,11 +28,13 @@ pipeline {
                 script{
                     
                     //Install the required Jenkins plugins
+                    //The MTS template currently requires the following plugins to be present
                     def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven"])
                     
                     if( pluginsHaveBeenInstalled ) {
                         // We need to restart Jenkins in case new plugins have been installed.
                         //if set to false, then do a force restart
+                        //still requires to manually start the job again afterwards
                         jenkinsConfiguration.restartJenkins(false);
                     }
 
