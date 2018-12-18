@@ -1,4 +1,4 @@
-@Library('pdehnel-sharedlib@feature/devon4j')
+@Library('ProductionLineTemplateLib')
 
 //Sharedlibrary configuration
 import com.capgemini.productionline.configuration.*
