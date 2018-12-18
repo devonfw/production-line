@@ -1,1 +1,40 @@
+= Devon4J My-Thai-Star Sample Application Template for Production Line
+
 image::doc/images/devonfw.png[DevonFW Logo]
+
+== Introduction
+This template will configure your PL instance to have a 'ready to use' My-Thai-Star application, to be used as a starting point for your project. This includes:
+* Cloning the official `My-Thai-Star` repository into your GitLab, which allows you to do customizations on your own.
+* Adding a build job for the Angular front-end, including a SonarQube analysis and a deployment to Nexus.
+* Adding a build job for the Java back-end, including a SonarQube analysis and a deployment to Nexus.
+* Adding a deployment job for the Angular front-end
+* Adding a deployment job for the Java back-end
+* Adding a 'full-deployment' job that triggers the deployment of both components
+
+Especially the build and delpoyment jobs require several additional Jenkins Plugins, which are not part of the PL by default. The Template will also take care of those installations.
+
+== How to report Issues 
+This template is independent from PL and devon releases and is also not really connected to one of the projects. Therefore issues that occur during the template setup or execution should be tracked in the issue section of this GitHub project. 
+
+== How to contribute
+In case you see improvements we would love to see a Pull Request.
+
+== Prerequisities
+To use the template you need to make that:
+* You PL has the following components installed:
+** Jenkins (required to run the template and to execute the build/deployment Jobs)
+** SonarQube (required for a static code analysis)
+** GitLab (required as a repostiory)
+** Nexus (required to store the build artifacts)
+
+In case you want to use the deployment jobs, make sure you:
+* Have an additional test-server (a PL does not include a test environment, so a separate Linux machine is required)
+** SSH access should be available through an SSH-RSA key
+** Docker-CE has to be installed
+** Docker-Compose has to be installed
+
+== How to run it
+Just do it
+
+== Expected results
+Everything works
