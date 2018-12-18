@@ -1,0 +1,221 @@
+@Library('ProductionLineTemplateLib')
+
+//Sharedlibrary configuration
+import com.capgemini.productionline.configuration.*
+
+//Nexus nexusConfiguration = new Nexus();
+Jenkins jenkinsConfiguration = new Jenkins();
+GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN);
+
+pipeline {
+    agent any
+    
+    //Jenkins Job Parameters
+    parameters { 
+        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'BSXJct1gp1xozXCmfsc_', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample Devon4J application', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CLONE_URL', defaultValue: 'https://github.com/devonfw/my-thai-star.git', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+
+    }
+    
+    stages {
+        
+         stage('PL setup') {
+            steps{
+                script{
+                    
+                    //Install the required Jenkins plugins
+                    //The MTS template currently requires the following plugins to be present
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin"])
+                    
+                    if( pluginsHaveBeenInstalled ) {
+                        // We need to restart Jenkins in case new plugins have been installed.
+                        //if set to false, then do a force restart
+                        //still requires to manually start the job again afterwards
+                        jenkinsConfiguration.restartJenkins(false);
+                    }
+
+                    //Add the required custom tools
+                    //addCustomTool(String toolName, String commandLabel, String homeDir, String filePath, String exportedPaths, String toolHome, String additionalVariables)
+                    
+                    String toolName = "" //required
+                    String commandLabel = "" //required
+                    String homeDir = null
+                    String filePath = "" //required
+                    String exportedPaths = null
+                    String toolHome = null
+                    String additionalVariables = null
+                    
+                    //jenkinsConfiguration.addCustomTool(toolName, commandLabel, homeDir, filePath, exportedPaths, toolHome, additionalVariables)
+                    
+                    //Add the required script approval
+                    //method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object
+                    //jenkinsConfiguration.
+                    
+                    //Add the global maven settings credential
+                    
+                }
+            }
+        }
+        
+        stage('Clone repo') {
+            steps{
+                script{
+                    
+                    //Check if group already exists
+                    if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
+                        //Create a group for devon
+                        // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
+                        gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
+                    }
+
+                    //Check if project already exists
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
+                        //Create a new public repository for MyThaiStar inside the Production Line based on the official repository
+                        gitlabConfiguration.createProject(
+                            params.GITLAB_CREATE_GROUP_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
+                            params.GITLAB_CREATE_BRANCH, 
+                            params.GITLAB_CLONE_URL,
+                            "public"
+                        )
+                    }
+                }
+            }
+        }
+
+        stage('Generate build and deploy jobs in Jenkins'){
+            steps{
+                script{
+                    //Disable Job Security
+                    jenkinsConfiguration.disableJobDSLScriptSecurity()
+
+                    //Prepare folders in Jenkins for the jobs
+                    jobDsl scriptText: """
+                        folder("MTS"){
+                            description('Jobs generated by the MyThaiStar Template.')
+                        }
+                        """
+
+                    //Build job
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_FRONTEND_BUILD") {
+                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/angular/cicd/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+
+                    //Build job
+
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_SERVER_BUILD") {
+                            description('Build job for MyThaiStar sample devon application. Server component.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/java/cicd/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+                    //Deploy jobs
+                    //Frontend Only
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_FRONTEND_DEPLOY") {
+                            description('Deploy job for MyThaiStar Frontend Only.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/angular/deployment/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+                    //Deploy jobs
+                    //Backend only
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_SERVER_DEPLOY") {
+                            description('Deploy job for MyThaiStar Backend only.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/java/deployment/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+                    //Deploy jobs
+                    //Both at once
+                    jobDsl scriptText: """
+                        pipelineJob("MTS/MyThaiStar_DEPLOY-Together") {
+                            description('Deployment Pipeline for both Frontend and Backend at the same time.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('develop')
+                                            scriptPath('jenkins/deployment/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+                    //Enable Job Security again
+                    jenkinsConfiguration.enableJobDSLScriptSecurity()
+                }
+            }
+        }
+    }
+}
