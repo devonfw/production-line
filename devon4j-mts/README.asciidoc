@@ -3,7 +3,6 @@
 image::doc/images/devonfw.png[DevonFW Logo]
 
 
-
 == Introduction
 
 This template will configure your PL instance to have a 'ready to use' My-Thai-Star Devon application, to be used as a starting point for your project. This includes:
@@ -57,8 +56,8 @@ Additional components can be ordered from the ProductionLine service team.
 
 In order to configure the services, we need technical users for the following components:
 
-Gitlab
-Nexus3
+* Gitlab
+* Nexus3
 
 ==== Gitlab
 
@@ -85,14 +84,46 @@ image::./doc/images/created_token.JPG[600,500]
 
 [IMPORTANT]
 ====
-The GitLab API user needs to have API access and the rights to create a new group.
+The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps:
 ====
 
+1. Enter the Admin control panel
+2. Select 'Users'
+3. Select the user(s) in question and click 'Edit'
+4. Scroll down to 'Access' and un-tick 'Can Create Group'
 
 
 ==== Technical Nexus user 
 
-*TODO
+===== Create the technical Nexus User
+https://km3.capgemini.com/book/1089771
+
+1. The nexus3-api user should be created in section Administration
+
+image::./doc/images/nexusadmin.png[600,500]
+
+2. New user should have added roles: Admins, nx-admins
+
+image::./doc/images/nexususer.png[600,500]
+
+
+=====  Add it as credential in Jenkins
+
+Credentials 'nexus-api' user should be added to Jenkins
+Jenkins -> Credentials -> System -> Global credentials (unrestricted) -> Add Credentials
+
+image::./doc/images/credential.png[800,500]
+
+
+=====  Add the user to maven global settings in Jenkins:
+
+1. Jenkins -> Managed Files -> Edit Global Maven Settings XML
+
+image::./doc/images/mavensettings.png[600,500]
+
+2.  Add the credential to the settings xml, use the ID "pl-nexus"
+
+image::./doc/images/mavensettings2.png[600,500]
 
 
 === Deployment Requirements
