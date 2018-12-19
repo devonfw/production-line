@@ -137,6 +137,14 @@ image::./doc/images/mavensettings2.png[600,500]
 
 ===== Token for SonarQube
 
+* TODO add technical account before
+
+1. Go to SonarQube.
+2. Go to your account.
+image::./doc/images/sonaraccount.png[600,500]
+3. Go to Security tab.
+4. Generate the token.
+
 ===== Configure Sonarqube in Jenkins
 
 SonarQube must be confifgured in Jenkins, so that we can easily use the SonarQube server in our builds.
