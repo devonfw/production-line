@@ -34,6 +34,12 @@ In case you see improvements we would love to see a Pull Request.
 
 
 == Prerequisities
+
+[WARNING]
+====
+Right now you need add the PL Jenkins SharedLib manually with the name "ProductionLineTemplateLib" in Jenkins https://github.com/devonfw-forge/devon-production-line-shared-lib.git.
+====
+
  
 === Production Line Components
 
