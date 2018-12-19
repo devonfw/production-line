@@ -52,11 +52,11 @@ pipeline {
                     //jenkinsConfiguration.addCustomTool(toolName, commandLabel, homeDir, filePath, exportedPaths, toolHome, additionalVariables)
                     
                     //Add the required script approval
-                    //method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object
-                    //jenkinsConfiguration.
+                    jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
                     
                     //Add the global maven settings credential
-                    
+                    //TODO will be skipped for now because it is not easy to add a credential to an existing global maven settings file
+
                 }
             }
         }
