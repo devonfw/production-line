@@ -1,6 +1,9 @@
 = Devon4J My-Thai-Star Sample Application Template for Production Line
+:toc: macro
 
 image::doc/images/devonfw.png[DevonFW Logo]
+
+toc::[]
 
 
 == Introduction
