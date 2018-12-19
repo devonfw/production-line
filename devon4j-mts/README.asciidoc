@@ -64,8 +64,9 @@ In order to configure the services, we need technical users for the following co
 
 * Gitlab
 * Nexus3
+* SonarQube
 
-==== Gitlab
+==== Technical Gitlab User and settings
 
 The creation of the GitLab Group and Project will require a private GitLab token which has to be provided manually. The token can be obtained like this:
 
@@ -99,7 +100,7 @@ The GitLab API user needs to have API access and the rights to create a new grou
 4. Scroll down to 'Access' and un-tick 'Can Create Group'
 
 
-==== Technical Nexus user 
+==== Technical Nexus3 user and settings
 
 ===== Create the technical Nexus User
 https://km3.capgemini.com/book/1089771
@@ -123,13 +124,28 @@ image::./doc/images/credential.png[800,500]
 
 =====  Add the user to maven global settings in Jenkins:
 
-1. Jenkins -> Managed Files -> Edit Global Maven Settings XML
+1. Jenkins -> Settings -> Managed Files -> Edit Global Maven Settings XML
 
 image::./doc/images/mavensettings.png[600,500]
 
 2.  Add the credential to the settings xml, use the ID "pl-nexus"
 
 image::./doc/images/mavensettings2.png[600,500]
+
+
+==== Technical SonarQube user and settings
+
+===== Token for SonarQube
+
+===== Configure Sonarqube in Jenkins
+
+SonarQube must be confifgured in Jenkins, so that we can easily use the SonarQube server in our builds.
+
+Go to Jenkins -> Settings -> Configuration -> SonarQube Servers
+
+Add the following data
+
+image::./doc/images/sonarjenkins.png[600,500]
 
 
 === Deployment Requirements
