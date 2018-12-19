@@ -38,18 +38,16 @@ pipeline {
                         jenkinsConfiguration.restartJenkins(false);
                     }
 
-                    //Add the required custom tools
-                    //addCustomTool(String toolName, String commandLabel, String homeDir, String filePath, String exportedPaths, String toolHome, String additionalVariables)
+                    //Add nodejs
+                    //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
                     
-                    String toolName = "" //required
-                    String commandLabel = "" //required
-                    String homeDir = null
-                    String filePath = "" //required
-                    String exportedPaths = null
-                    String toolHome = null
-                    String additionalVariables = null
-                    
-                    //jenkinsConfiguration.addCustomTool(toolName, commandLabel, homeDir, filePath, exportedPaths, toolHome, additionalVariables)
+                    String installName = "NodeJS 10.14.0"
+                    String nodeJS_Version = "10.14.0"
+                    String npmPackages = "yarn"
+                    String home = ""
+                    long npmPackagesRefreshHours = 100
+
+                    nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
                     
                     //Add the required script approval
                     jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
