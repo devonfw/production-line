@@ -62,9 +62,26 @@ Nexus3
 
 ==== Gitlab
 
-The creation of the GitLab Group and Project will require a GitLab token which has to be provided manually. The token has to be created by:
+The creation of the GitLab Group and Project will require a private GitLab token which has to be provided manually. The token can be obtained like this:
 
-* TODO
+
+1. Go to your Profile in Gitlab
+
+image::./doc/images/profile.png[500,400]
+
+2. Next click on the pen icon
+
+image::./doc/images/pen.png[500,400]
+
+3. On the left menu choose Access Tokens and put token name and check fields like below +
+
+image::./doc/images/token.JPG[600,500]
+
+4. Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
+
+image::./doc/images/created_token.JPG[600,500]
+
+
 
 [IMPORTANT]
 ====
