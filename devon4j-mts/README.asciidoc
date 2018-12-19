@@ -152,6 +152,11 @@ If it needs to install plugins, a restart will be performed.
 So please make sure, that nothing important is running.
 ====
 
+[IMPORTANT]
+====
+We have job-parameters inside the template Jenkinsfile that will only be active if Jenkins has run the job at least once!
+====
+
 === Setup template job in Jenkins
 
 * TODO
