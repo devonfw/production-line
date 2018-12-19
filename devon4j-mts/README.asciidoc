@@ -237,3 +237,11 @@ Build job for Backend
 Deploy job for Frontend
 Deploy job for Backend
 Deploy job for both deployments
+
+- Update SonarScanner Tool
+- First deployment must be "MyThaiStar_DEPLOY-Together" because it will copy everything needed
+
+
+
+
+- Deployment choose SSH key
