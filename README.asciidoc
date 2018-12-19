@@ -1,8 +1,8 @@
 = Production Line Templates
 
-This repository contains a collection of templates and acts as some kind of 'marketplace'. 
+This repository contains a collection of templates that can be used inside a Production Line Jenkins to setup/configure and execute certain tasks.
 
-To find the documentation related to a specific template please have a look at the `README.asciidoc` in the sub-folder of that template.
+To find the documentation related to a specific template please have a look at the `README.asciidoc` in the sub-folder of the template.
 
 == How to add a Template to your instance
 
@@ -11,3 +11,8 @@ TODO
 == How to run it
 
 TODO
+
+== How to contribute
+
+TODO
+
