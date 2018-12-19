@@ -129,11 +129,11 @@ image::./doc/images/credential.png[800,500]
 
 1. Jenkins -> Settings -> Managed Files -> Edit Global Maven Settings XML
 
-image::./doc/images/mavensettings.png[600,500]
+image::./doc/images/mavensettings.PNG[600,500]
 
 2.  Add the credential to the settings xml, use the ID "pl-nexus"
 
-image::./doc/images/mavensettings2.png[600,500]
+image::./doc/images/mavensettings2.PNG[600,500]
 
 
 ==== Technical SonarQube user and settings
@@ -144,7 +144,7 @@ image::./doc/images/mavensettings2.png[600,500]
 
 1. Go to SonarQube.
 2. Go to your account.
-image::./doc/images/sonaraccount.png[600,500]
+image::./doc/images/sonaraccount.PNG[600,500]
 3. Go to Security tab.
 4. Generate the token.
 
@@ -156,7 +156,7 @@ Go to Jenkins -> Settings -> Configuration -> SonarQube Servers
 
 Add the following data
 
-image::./doc/images/sonarjenkins.png[600,500]
+image::./doc/images/sonarjenkins.PNG[600,500]
 
 
 === Deployment Requirements
@@ -168,7 +168,6 @@ In case you want to use the deployment jobs, make sure you:
 ** SSH access should be available through an SSH-RSA key
 ** Docker-CE has to be installed
 ** Docker-Compose has to be installed
-
 
 
 == How to run it
@@ -202,7 +201,7 @@ If a restart was needed, you need to trigger the job again!
 
 * The job should now show the required parameters, you only need to change the GITLAB PRIVATE TOKEN that you should have generated in the prerequisite section
 
-image::./doc/images/job.png[600,500]
+image::./doc/images/job.PNG[600,500]
 
 When everything is "green", the template is done and you can have a look in the created "MTS" folder in Jenkins.
 
@@ -210,6 +209,15 @@ When everything is "green", the template is done and you can have a look in the 
 ====
 It will take a few minutes to clone the official MTS repository to the internal Gitlab.
 ====
+
+==== Build Jobs
+
+* TODO The build Jobs are ready to be used.
+
+==== Deployment Jobs
+All Deployment Jobs have several parameters configured in their Jenkinsfile. Sadly, Jenkins does not pick them up immediatly, so you need to execute the job once, by pressing the "Build now" button. The run should fail quite fast and once you refresh the page, the "Build now" button should have changed to "Build with Parameters". If you now click on the button you should see the parameters below:
+
+image::./doc/images/JenkinsDeployParameters.png[Jenkins Deployment Parameters]
 
 == Expected results
 
