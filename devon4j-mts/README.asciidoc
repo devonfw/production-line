@@ -173,7 +173,21 @@ We have job-parameters inside the template Jenkinsfile that will only be active 
 If a restart was needed, you need to trigger the job again!
 ====
 
+* The job should now show the required parameters, you only need to change the GITLAB PRIVATE TOKEN that you should have generated in the prerequisite section
+
+image::./doc/images/job.png[600,500]
+
+When everything is "green", the template is done and you can have a look in the created "MTS" folder in Jenkins.
+
+[IMPORTANT]
+====
+It will take a few minutes to clone the official MTS repository to the internal Gitlab.
+====
 
 == Expected results
 
-Everything works
+Build job for Frontend 
+Build job for Backend
+Deploy job for Frontend
+Deploy job for Backend
+Deploy job for both deployments
