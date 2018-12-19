@@ -2,10 +2,13 @@
 
 image::doc/images/devonfw.png[DevonFW Logo]
 
-== Introduction
-This template will configure your PL instance to have a 'ready to use' My-Thai-Star application, to be used as a starting point for your project. This includes:
 
-* Cloning the official `My-Thai-Star` repository into your GitLab, which allows you to do customizations on your own.
+
+== Introduction
+
+This template will configure your PL instance to have a 'ready to use' My-Thai-Star Devon application, to be used as a starting point for your project. This includes:
+
+* Cloning the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository into your GitLab, which allows you to do customizations on your own.
 
 * Adding a build job for the Angular front-end, including a SonarQube analysis and a deployment to Nexus.
 
@@ -17,17 +20,25 @@ This template will configure your PL instance to have a 'ready to use' My-Thai-S
 
 * Adding a 'full-deployment' job that triggers the deployment of both components
 
-Especially the build and delpoyment jobs require several additional Jenkins Plugins, which are not part of the PL by default. The Template will also take care of those installations.
+Especially the build and delpoyment jobs require several additional Jenkins plugins, which are not part of the PL by default. The Template will also take care of those installations.
 
-== How to report Issues 
+All build and deployment jobs are taken from the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository. The created jobs inside Jenkins use the Jenkinsfiles from the cloned repo in Gitlab.
+
+== How to report Issues
+
 This template is independent from PL and devon releases and is also not really connected to one of the projects. Therefore issues that occur during the template setup or execution should be tracked in the issue section of this GitHub project. 
 
 == How to contribute
+
 In case you see improvements we would love to see a Pull Request.
 
-== Prerequisities
 
-To use the template you need to make that:
+
+== Prerequisities
+ 
+=== Production Line Components
+
+To use the template you need to make sure that:
 
 * You PL has the following components installed:
 
@@ -42,6 +53,15 @@ To use the template you need to make that:
 Additional components can be ordered from the ProductionLine service team.
 ====
 
+=== Technical User Setup 
+
+In order to configure the services, we need technical users for the following components:
+
+Gitlab
+Nexus3
+
+==== Gitlab
+
 The creation of the GitLab Group and Project will require a GitLab token which has to be provided manually. The token has to be created by:
 
 * TODO
@@ -51,9 +71,14 @@ The creation of the GitLab Group and Project will require a GitLab token which h
 The GitLab API user needs to have API access and the rights to create a new group.
 ====
 
-Technical Nexus user 
+
+
+==== Technical Nexus user 
 
 *TODO
+
+
+=== Deployment Requirements
 
 In case you want to use the deployment jobs, make sure you:
 
@@ -62,6 +87,8 @@ In case you want to use the deployment jobs, make sure you:
 ** SSH access should be available through an SSH-RSA key
 ** Docker-CE has to be installed
 ** Docker-Compose has to be installed
+
+
 
 == How to run it
 
