@@ -158,6 +158,15 @@ Add the following data
 
 image::./doc/images/sonarjenkins.PNG[600,500]
 
+===== SonarQube Webhook to inform Jenkins
+
+A part of the Build Job will ask SonarQube if the quality gate has been passed. For this step a so called "webhook" has to be configured in SonarQube. To do so,
+
+. Go to SonarQube
+. Select 'Administration'
+. Select 'Configuration', 'General Settings' and select 'Webhooks' in the left menu
+. Add the following webhook: image:[SonarqubeWebhook.png,float="right"]
+. Press 'Save'
 
 === Deployment Requirements
 
@@ -218,6 +227,8 @@ It will take a few minutes to clone the official MTS repository to the internal 
 All Deployment Jobs have several parameters configured in their Jenkinsfile. Sadly, Jenkins does not pick them up immediatly, so you need to execute the job once, by pressing the "Build now" button. The run should fail quite fast and once you refresh the page, the "Build now" button should have changed to "Build with Parameters". If you now click on the button you should see the parameters below:
 
 image::./doc/images/JenkinsDeployParameters.png[Jenkins Deployment Parameters]
+
+* TODO Just select a version and press build...
 
 == Expected results
 
