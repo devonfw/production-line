@@ -135,6 +135,8 @@ image::./doc/images/mavensettings.PNG[600,500]
 
 image::./doc/images/mavensettings2.PNG[600,500]
 
+==== Jenkins Preparation
+TODO: SonarQube scanner does not work...
 
 ==== Technical SonarQube user and settings
 
@@ -165,7 +167,7 @@ A part of the Build Job will ask SonarQube if the quality gate has been passed. 
 . Go to SonarQube
 . Select 'Administration'
 . Select 'Configuration', 'General Settings' and select 'Webhooks' in the left menu
-. Add the following webhook: image:[SonarqubeWebhook.png,float="right"]
+. Add the following webhook image:[SonarqubeWebhook.png,float="right"]
 . Press 'Save'
 
 === Deployment Requirements
@@ -194,7 +196,7 @@ We have job-parameters inside the template Jenkinsfile that will only be active 
 
 === Setup template job in Jenkins
 
-* TODO
+* TODO (copy from other repo?)
 
 === Execute the Jenkins job in your Jenkins
 
@@ -228,20 +230,6 @@ All Deployment Jobs have several parameters configured in their Jenkinsfile. Sad
 
 image::./doc/images/JenkinsDeployParameters.png[Jenkins Deployment Parameters]
 
-* TODO Just select a version and press build...
+* TODO Just select a version and press build... DESCRIBE ALL PARAMETERS (ssh key setup, ....)
 
-== Expected results
-
-Build job for Frontend 
-Build job for Backend
-Deploy job for Frontend
-Deploy job for Backend
-Deploy job for both deployments
-
-- Update SonarScanner Tool
-- First deployment must be "MyThaiStar_DEPLOY-Together" because it will copy everything needed
-
-
-
-
-- Deployment choose SSH key
+- First deployment must be "MyThaiStar_DEPLOY-Together" because it will copy everything needed!!!!!!!!!!!!!!!!!!@pdehnel
