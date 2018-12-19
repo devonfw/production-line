@@ -146,7 +146,28 @@ In case you want to use the deployment jobs, make sure you:
 
 == How to run it
 
-Just do it
+[WARNING]
+====
+If it needs to install plugins, a restart will be performed.
+So please make sure, that nothing important is running.
+====
+
+=== Setup template job in Jenkins
+
+* TODO
+
+=== Execute the Jenkins job in your Jenkins
+
+* Go to the Jenkins job.
+* Execute job.
+* It will try to configure and setup the PL components such as Jenkins/Gitlab and Nexus.
+
+
+[IMPORTANT]
+====
+If a restart was needed, you need to trigger the job again!
+====
+
 
 == Expected results
 
