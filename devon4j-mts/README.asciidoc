@@ -52,29 +52,27 @@ In case you see improvements we would love to see a Pull Request.
 
 
 
-== Prerequisities
+== Prerequisities before running the template
 
 [WARNING]
 ====
-Right now you need add the PL Jenkins SharedLib manually with the name "ProductionLineTemplateLib" in Jenkins https://github.com/devonfw-forge/devon-production-line-shared-lib.git.
+Right now you need add the PL Jenkins SharedLib manually with the name "ProductionLineTemplateLib" in Jenkins https://github.com/devonfw-forge/devon-production-line-shared-lib.git. Go to the repository for a step-by-step guide.
 ====
 
  
 === Production Line Components
 
-To use the template you need to make sure that:
+*To use the template you need to make sure that your PL has the following components installed:*
 
-* You PL has the following components installed:
-
-** Jenkins (required to run the template and to execute the build/deployment Jobs)
-** SonarQube (required for a static code analysis)
-** GitLab (required as a repostiory)
-** Nexus (required to store the build artifacts)
+* Jenkins (required to run the template and to execute the build/deployment Jobs)
+* SonarQube (required for a static code analysis)
+* GitLab (required as a repostiory)
+* Nexus (required to store the build artifacts)
 
 
 [TIP]
 ====
-Additional components can be ordered from the ProductionLine service team.
+*Additional components can be ordered from the ProductionLine service team.*
 ====
 
 === Technical User Setup 
@@ -85,9 +83,11 @@ In order to configure the services, we need technical users for the following co
 * Nexus3
 * SonarQube
 
+*The following sections describe how to configure the components to enable technical users and tokens.*
+
 ==== Technical Gitlab User and settings
 
-The creation of the GitLab Group and Project will require a private GitLab token which has to be provided manually. The token can be obtained like this:
+The creation of the GitLab Group and Project will require a private GitLab token which has to be created manually. The token can be obtained like this:
 
 
 1. Go to your Profile in Gitlab
@@ -121,8 +121,9 @@ The GitLab API user needs to have API access and the rights to create a new grou
 
 ==== Technical Nexus3 user and settings
 
+Nexus3 is used to store build artifacts such as the frontend and the backend. In the future it might also be used to store docker images of MTS.
+
 ===== Create the technical Nexus User
-https://km3.capgemini.com/book/1089771
 
 1. The nexus3-api user should be created in section Administration
 
@@ -152,7 +153,25 @@ image::./doc/images/mavensettings.PNG[600,500]
 image::./doc/images/mavensettings2.PNG[600,500]
 
 ==== Jenkins Preparation
-TODO: SonarQube scanner does not work...
+
+
+[NOTE]
+====
+* TODO Either automate this step in Jenkins (create sonarqube scanner settings as custom tool) or change the way of running sonarqube in the respective MTS build job to maven.
+====
+
+Jenkins must be configured to have default SonarQube scanner installation.
+
+* Go to Jenkins.
+* Go to "Configure Custom Tools".
+* Go to the "SonarQube Scanner" section.
+* Add a new Sonarqube scanner with  
+** name: SonarQube
+** Download-Url: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.2.0.1227-linux.zip
+** Subdir: sonar-scanner-3.2.0.1227-linux/
+
+image::./doc/images/jenkinsonarscanner.PNG[]
+
 
 ==== Technical SonarQube user and settings
 
@@ -160,11 +179,11 @@ TODO: SonarQube scanner does not work...
 
 * TODO add technical account before
 
-1. Go to SonarQube.
-2. Go to your account.
+* Go to SonarQube.
+* Go to your account.
 image::./doc/images/sonaraccount.PNG[600,500]
-3. Go to Security tab.
-4. Generate the token.
+* Go to Security tab.
+* Generate the token.
 
 ===== Configure Sonarqube in Jenkins
 
