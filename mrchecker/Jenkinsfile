@@ -18,6 +18,29 @@ pipeline{
     }
 
     stages {
+        
+        stage('PL setup') {
+            steps{
+                script{
+                    println "Trying to install allure config"
+                    String mavenVersion = "2.7.0"
+                    String commandLineInstallerName = "Allure 2.7.0"
+                    String home = ""
+
+                    AllureInstallSuccess = jenkinsConfiguration.addAllurePluginConfig(mavenVersion, commandLineInstallerName, home)
+                    
+                    //Add the required script approval
+                    println "Adding required script approvals in Jenkins"
+                    jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
+                    
+                    //Add the global maven settings credential
+                    //println "Trying to add credentials to maven global settings"
+                    //TODO will be skipped for now because it is not easy to add a credential to an existing global maven settings file
+
+                }
+            }
+        }          
+        
         stage('Create Gitlab repo') {
             steps{
                 script{ 
