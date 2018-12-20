@@ -8,6 +8,8 @@ toc::[]
 
 == Introduction
 
+Please read all of the following sections carefully.
+
 === Overview
 
 This template will configure your PL instance to have a 'ready to use' My-Thai-Star Devon application. It can be used as a starting point for your projects. This includes:
@@ -187,7 +189,7 @@ image::./doc/images/sonarjenkins.PNG[600,500]
 
 ==== Technical SonarQube user and settings
 
-===== Token for SonarQube
+===== User Token for SonarQube
 
 * Go to SonarQube.
 * Go to your account.
@@ -221,7 +223,7 @@ In case you want to use the deployment jobs, make sure you:
 
 [WARNING]
 ====
-If it needs to install plugins, a restart will be performed.
+If Jenkins needs to install plugins, a restart will be performed.
 So please make sure, that nothing important is running.
 ====
 
@@ -232,7 +234,8 @@ We have job-parameters inside the template Jenkinsfile that will only be active 
 
 === Setup template job in Jenkins
 
-* TODO (copy from other repo?)
+The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw-forge/devon-production-line.git
+
 
 === Execute the Jenkins job in your Jenkins
 
@@ -250,22 +253,50 @@ If a restart was needed, you need to trigger the job again!
 
 image::./doc/images/job.PNG[600,500]
 
-When everything is "green", the template is done and you can have a look in the created "MTS" folder in Jenkins.
+When everything is "green" the template is done and you can have a look in the created "MTS" folder in Jenkins.
 
 [IMPORTANT]
 ====
-It will take a few minutes to clone the official MTS repository to the internal Gitlab.
+It will take a few minutes to clone the official MTS repository to the internal Gitlab. So you need to wait before executing the build jobs at the frist time.
 ====
 
 ==== Build Jobs
 
-* TODO The build Jobs are ready to be used.
+You can now execute the build for the frontend and also the backend. They do not require any parameters to run. The expected result is, that both jobs can run without any errors. They will build, test and deploy the artifacts to Nexus3.
 
 ==== Deployment Jobs
-All Deployment Jobs have several parameters configured in their Jenkinsfile. Sadly, Jenkins does not pick them up immediatly, so you need to execute the job once, by pressing the "Build now" button. The run should fail quite fast and once you refresh the page, the "Build now" button should have changed to "Build with Parameters". If you now click on the button you should see the parameters below:
+
+All deployment jobs have several parameters configured in their Jenkinsfile. Unfortunately, Jenkins does not pick them up immediatly, *so you need to execute the job once, by pressing the "Build now" button.* 
+The run should fail quite fast and once you refresh the page, the "Build now" button should have changed to "Build with Parameters". If you now click on the button you should see the parameters below:
 
 image::./doc/images/JenkinsDeployParameters.png[Jenkins Deployment Parameters]
 
-* TODO Just select a version and press build... DESCRIBE ALL PARAMETERS (ssh key setup, ....)
+You need to set the following parameters in order to get it running:
 
-- First deployment must be "MyThaiStar_DEPLOY-Together" because it will copy everything needed!!!!!!!!!!!!!!!!!!@pdehnel
+
+.Required Parameters
+[width="100%",options="header,footer"]
+|====================
+| Parameter | Description 
+| sshAgentCredentials | A Jenkins SSH-Credential object. You need to create this and it has to contain a valid SSH authentication to your deployment server.
+| nexusCredentialsId | The nexus technical user that you have created in the prerequisite section.
+| VERSION | The version of the artifact that was built in the build jobs. For example "1.12.3-SNAPSHOT".
+| EXTERNAL_SERVER_IP | The IP of the deployment server.  
+| APPLICATION_DIR | The directory where the artifacts will be stored on the deployment server.
+|====================
+
+Default settings that should not be changed:
+
+.Default Parameters
+[width="100%",options="header,footer"]
+|====================
+| Parameter | Description 
+| nexusApiUrl |  The internal PL nexus3 URL where it will download the artifacts from.
+| repository | The name of the maven repository. 
+|====================
+
+[IMPORTANT]
+====
+When running the deployment for the first time, you need to execute the *MyThaiStar_DEPLOY-Together* job. It will copy and setup the configuration needed on the deployment server.
+====
+
