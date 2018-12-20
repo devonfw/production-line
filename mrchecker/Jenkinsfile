@@ -1,4 +1,4 @@
-@Library('pdehnel-sharedlib@feature/devon4j') _
+@Library('ProductionLineTemplateLib')
 import com.capgemini.productionline.configuration.*
 
 Jenkins jenkinsConfiguration = new Jenkins();
