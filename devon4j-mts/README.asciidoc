@@ -1,56 +1,302 @@
 = Devon4J My-Thai-Star Sample Application Template for Production Line
+:toc: macro
 
 image::doc/images/devonfw.png[DevonFW Logo]
 
+toc::[]
+
+
 == Introduction
-This template will configure your PL instance to have a 'ready to use' My-Thai-Star application, to be used as a starting point for your project. This includes:
-* Cloning the official `My-Thai-Star` repository into your GitLab, which allows you to do customizations on your own.
+
+Please read all of the following sections carefully.
+
+=== Overview
+
+This template will configure your PL instance to have a 'ready to use' My-Thai-Star Devon application. It can be used as a starting point for your projects. This includes:
+
+* Cloning the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository into your GitLab, which allows you to do customizations on your own.
+
 * Adding a build job for the Angular front-end, including a SonarQube analysis and a deployment to Nexus.
+
 * Adding a build job for the Java back-end, including a SonarQube analysis and a deployment to Nexus.
+
 * Adding a deployment job for the Angular front-end
+
 * Adding a deployment job for the Java back-end
+
 * Adding a 'full-deployment' job that triggers the deployment of both components
 
-Especially the build and delpoyment jobs require several additional Jenkins Plugins, which are not part of the PL by default. The Template will also take care of those installations.
+Especially the build and delpoyment jobs require several additional Jenkins plugins, which are not part of the PL by default. The Template will also take care of those installations.
 
-== How to report Issues 
+All build and deployment jobs are taken from the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository. The created build and deployment jobs inside Jenkins will use the Jenkinsfiles from the cloned repo in Gitlab. These are currently the following Jenkinsfiles:
+
+=== Jenkins Jobs
+
+.Jenkins Jobs
+[width="100%",options="header,footer"]
+|====================
+| Jenkins job name | Path to Jenkinsfile in repo | Description 
+| MyThaiStar_FRONTEND_BUILD | jenkins/angular/cicd/Jenkinsfile | Builds and tests the Angular frontend. Pushes artifacts to Nexus.
+| MyThaiStar_SERVER_BUILD | jenkins/java/cicd/Jenkinsfile | Builds and tests the Java backend. Pushes artifacts to Nexus.
+| MyThaiStar_FRONTEND_DEPLOY |  jenkins/angular/deployment/Jenkinsfile | Frontend deployment job. Downloads the artifact from Nexus3, pushes it to the server via SSH then builds a docker image on the deployment server and starts the container.
+| MyThaiStar_SERVER_DEPLOY |  jenkins/java/deployment/Jenkinsfile | Backend deployment job. Downloads the artifact from Nexus3, pushes it to the server via SSH then builds a docker image on the deployment server and starts the container.
+| MyThaiStar_DEPLOY-Together | jenkins/deployment/Jenkinsfile | Setups the deployment server. Then starts Frontend deploy job and after that the server deploy job.
+|====================
+
+
+== How to report Issues
+
 This template is independent from PL and devon releases and is also not really connected to one of the projects. Therefore issues that occur during the template setup or execution should be tracked in the issue section of this GitHub project. 
 
 == How to contribute
+
 In case you see improvements we would love to see a Pull Request.
 
-== Prerequisities
-To use the template you need to make that:
-* You PL has the following components installed:
-** Jenkins (required to run the template and to execute the build/deployment Jobs)
-** SonarQube (required for a static code analysis)
-** GitLab (required as a repostiory)
-** Nexus (required to store the build artifacts)
+
+
+== Prerequisities before running the template
+
+[WARNING]
+====
+Right now you need add the PL Jenkins SharedLib manually with the name "ProductionLineTemplateLib" in Jenkins https://github.com/devonfw-forge/devon-production-line-shared-lib.git. Go to the repository for a step-by-step guide.
+====
+
+ 
+=== Production Line Components
+
+*To use the template you need to make sure that your PL has the following components installed:*
+
+* Jenkins (required to run the template and to execute the build/deployment Jobs)
+* SonarQube (required for a static code analysis)
+* GitLab (required as a repostiory)
+* Nexus (required to store the build artifacts)
+
 
 [TIP]
 ====
-Additional components can be ordered from the ProductionLine service team.
+*Additional components can be ordered from the ProductionLine service team.*
 ====
 
-The creation of the GitLab Group and Project will require a GitLab token which has to be provided manually. The token has to be created by:
-* TODO
+=== Technical User Setup 
+
+In order to configure the services, we need technical users for the following components:
+
+* Gitlab
+* Nexus3
+* SonarQube
+
+*The following sections describe how to configure the components to enable technical users and tokens.*
+
+==== Technical Gitlab User and settings
+
+The creation of the GitLab Group and Project will require a private GitLab token which has to be created manually. The token can be obtained like this:
+
+
+1. Go to your Profile in Gitlab
+
+image::./doc/images/profile.png[500,400]
+
+2. Next click on the pen icon
+
+image::./doc/images/pen.png[500,400]
+
+3. On the left menu choose Access Tokens and put token name and check fields like below +
+
+image::./doc/images/token.JPG[600,500]
+
+4. Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
+
+image::./doc/images/created_token.JPG[600,500]
+
+
 
 [IMPORTANT]
 ====
-The GitLab API user needs to have API access and the rights to create a new group.
+The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps:
 ====
 
-Technical Nexus user 
-*TODO
+1. Enter the Admin control panel
+2. Select 'Users'
+3. Select the user(s) in question and click 'Edit'
+4. Scroll down to 'Access' and un-tick 'Can Create Group'
+
+
+==== Technical Nexus3 user and settings
+
+Nexus3 is used to store build artifacts such as the frontend and the backend. In the future it might also be used to store docker images of MTS.
+
+===== Create the technical Nexus User
+
+1. The nexus3-api user should be created in section Administration
+
+image::./doc/images/nexusadmin.png[600,500]
+
+2. New user should have added roles: Admins, nx-admins
+
+image::./doc/images/nexususer.png[600,500]
+
+
+=====  Add it as credential in Jenkins
+
+Credentials 'nexus-api' user should be added to Jenkins
+Jenkins -> Credentials -> System -> Global credentials (unrestricted) -> Add Credentials
+
+image::./doc/images/credential.png[800,500]
+
+
+=====  Add the user to maven global settings in Jenkins:
+
+1. Jenkins -> Settings -> Managed Files -> Edit Global Maven Settings XML
+
+image::./doc/images/mavensettings.PNG[600,500]
+
+2.  Add the credential to the settings xml, use the ID "pl-nexus"
+
+image::./doc/images/mavensettings2.PNG[600,500]
+
+==== Jenkins Preparation
+
+The following steps must be configured in Jenkins to integrate SonarQube with Jenkins.
+
+==== SonarQube scanner configuration in Jenkins
+
+[NOTE]
+====
+* TODO Either automate this step in Jenkins (create sonarqube scanner settings as custom tool) or change the way of running sonarqube in the respective MTS build job to maven.
+====
+
+Jenkins must be configured to have default SonarQube scanner installation.
+
+* Go to Jenkins.
+* Go to "Configure Custom Tools".
+* Go to the "SonarQube Scanner" section.
+* Add a new Sonarqube scanner with  
+** name: SonarQube
+** Download-Url: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.2.0.1227-linux.zip
+** Subdir: sonar-scanner-3.2.0.1227-linux/
+
+image::./doc/images/jenkinsonarscanner.PNG[]
+
+===== Sonarqube Server configuration in Jenkins
+
+SonarQube must be configured in Jenkins, so that we can easily use the SonarQube server in our builds.
+
+Go to Jenkins -> Settings -> Configuration -> SonarQube Servers
+
+Add the following data
+
+image::./doc/images/sonarjenkins.PNG[600,500]
+
+==== Technical SonarQube user and settings
+
+===== User Token for SonarQube
+
+* Go to SonarQube.
+* Go to your account.
+image::./doc/images/sonaraccount.PNG[600,500]
+* Go to Security tab.
+* Generate the token.
+
+
+===== SonarQube Webhook to inform Jenkins
+
+A part of the Build Job will ask SonarQube if the quality gate has been passed. For this step a so called "webhook" has to be configured in SonarQube. To do so,
+
+. Go to SonarQube
+. Select 'Administration'
+. Select 'Configuration', 'General Settings' and select 'Webhooks' in the left menu
+. Add the following webhook image:[SonarqubeWebhook.png,float="right"]
+. Press 'Save'
+
+=== Deployment Requirements
 
 In case you want to use the deployment jobs, make sure you:
+
 * Have an additional test-server (a PL does not include a test environment, so a separate Linux machine is required)
+
 ** SSH access should be available through an SSH-RSA key
 ** Docker-CE has to be installed
 ** Docker-Compose has to be installed
 
-== How to run it
-Just do it
 
-== Expected results
-Everything works
+== How to run it
+
+[WARNING]
+====
+If Jenkins needs to install plugins, a restart will be performed.
+So please make sure, that nothing important is running.
+====
+
+[IMPORTANT]
+====
+We have job-parameters inside the template Jenkinsfile that will only be active if Jenkins has run the job at least once!
+====
+
+=== Setup template job in Jenkins
+
+The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw-forge/devon-production-line.git
+
+
+=== Execute the Jenkins job in your Jenkins
+
+* Go to the Jenkins job.
+* Execute job.
+* It will try to configure and setup the PL components such as Jenkins/Gitlab and Nexus.
+
+
+[IMPORTANT]
+====
+If a restart was needed, you need to trigger the job again!
+====
+
+* The job should now show the required parameters, you only need to change the GITLAB PRIVATE TOKEN that you should have generated in the prerequisite section
+
+image::./doc/images/job.PNG[600,500]
+
+When everything is "green" the template is done and you can have a look in the created "MTS" folder in Jenkins.
+
+[IMPORTANT]
+====
+It will take a few minutes to clone the official MTS repository to the internal Gitlab. So you need to wait before executing the build jobs at the frist time.
+====
+
+==== Build Jobs
+
+You can now execute the build for the frontend and also the backend. They do not require any parameters to run. The expected result is, that both jobs can run without any errors. They will build, test and deploy the artifacts to Nexus3.
+
+==== Deployment Jobs
+
+All deployment jobs have several parameters configured in their Jenkinsfile. Unfortunately, Jenkins does not pick them up immediatly, *so you need to execute the job once, by pressing the "Build now" button.* 
+The run should fail quite fast and once you refresh the page, the "Build now" button should have changed to "Build with Parameters". If you now click on the button you should see the parameters below:
+
+image::./doc/images/JenkinsDeployParameters.png[Jenkins Deployment Parameters]
+
+You need to set the following parameters in order to get it running:
+
+
+.Required Parameters
+[width="100%",options="header,footer"]
+|====================
+| Parameter | Description 
+| sshAgentCredentials | A Jenkins SSH-Credential object. You need to create this and it has to contain a valid SSH authentication to your deployment server.
+| nexusCredentialsId | The nexus technical user that you have created in the prerequisite section.
+| VERSION | The version of the artifact that was built in the build jobs. For example "1.12.3-SNAPSHOT".
+| EXTERNAL_SERVER_IP | The IP of the deployment server.  
+| APPLICATION_DIR | The directory where the artifacts will be stored on the deployment server.
+|====================
+
+Default settings that should not be changed:
+
+.Default Parameters
+[width="100%",options="header,footer"]
+|====================
+| Parameter | Description 
+| nexusApiUrl |  The internal PL nexus3 URL where it will download the artifacts from.
+| repository | The name of the maven repository. 
+|====================
+
+[IMPORTANT]
+====
+When running the deployment for the first time, you need to execute the *MyThaiStar_DEPLOY-Together* job. It will copy and setup the configuration needed on the deployment server.
+====
+
