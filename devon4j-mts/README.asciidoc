@@ -8,7 +8,9 @@ toc::[]
 
 == Introduction
 
-This template will configure your PL instance to have a 'ready to use' My-Thai-Star Devon application, to be used as a starting point for your project. This includes:
+=== Overview
+
+This template will configure your PL instance to have a 'ready to use' My-Thai-Star Devon application. It can be used as a starting point for your projects. This includes:
 
 * Cloning the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository into your GitLab, which allows you to do customizations on your own.
 
@@ -24,7 +26,21 @@ This template will configure your PL instance to have a 'ready to use' My-Thai-S
 
 Especially the build and delpoyment jobs require several additional Jenkins plugins, which are not part of the PL by default. The Template will also take care of those installations.
 
-All build and deployment jobs are taken from the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository. The created jobs inside Jenkins use the Jenkinsfiles from the cloned repo in Gitlab.
+All build and deployment jobs are taken from the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository. The created build and deployment jobs inside Jenkins will use the Jenkinsfiles from the cloned repo in Gitlab. These are currently the following Jenkinsfiles:
+
+=== Jenkins Jobs
+
+.Jenkins Jobs
+[width="100%",options="header,footer"]
+|====================
+| Jenkins job name | Path to Jenkinsfile in repo | Description 
+| MyThaiStar_FRONTEND_BUILD | jenkins/angular/cicd/Jenkinsfile | Builds and tests the Angular frontend. Pushes artifacts to Nexus.
+| MyThaiStar_SERVER_BUILD | jenkins/java/cicd/Jenkinsfile | Builds and tests the Java backend. Pushes artifacts to Nexus.
+| MyThaiStar_FRONTEND_DEPLOY |  jenkins/angular/deployment/Jenkinsfile | Frontend deployment job. Downloads the artifact from Nexus3, pushes it to the server via SSH then builds a docker image on the deployment server and starts the container.
+| MyThaiStar_SERVER_DEPLOY |  jenkins/java/deployment/Jenkinsfile | Backend deployment job. Downloads the artifact from Nexus3, pushes it to the server via SSH then builds a docker image on the deployment server and starts the container.
+| MyThaiStar_DEPLOY-Together | jenkins/deployment/Jenkinsfile | Setups the deployment server. Then starts Frontend deploy job and after that the server deploy job.
+|====================
+
 
 == How to report Issues
 

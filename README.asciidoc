@@ -6,7 +6,7 @@ To find the documentation related to a specific template please have a look at t
 
 
 
-== How to add a Template to your instance
+== How to add a Template to your PL instance
 
 
 * Go to Jenkins.
