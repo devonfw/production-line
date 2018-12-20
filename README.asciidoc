@@ -4,13 +4,33 @@ This repository contains a collection of templates that can be used inside a Pro
 
 To find the documentation related to a specific template please have a look at the `README.asciidoc` in the sub-folder of the template.
 
+
+
 == How to add a Template to your instance
 
-TODO
+
+* Go to Jenkins.
+* On the upper left click on "New Element" to create a new Jenkins job.
+* Chose a name for the job such as "MTS-template-seed-job". The job type has to be "Pipeline". Click on ok. 
+
+image::./doc/images/newjenkinsjob.PNG[]
+
+
+* Scroll down to the bottom of the job creation page where you will find the "Pipeline" section. 
+
+** Switch to "Pipeline script from SCM".
+** Set "SCM" to "Git".
+** Set "Repository URL" to: https://github.com/devonfw-forge/devon-production-line.git
+** Credentials can be left empty, because the repository is public.
+** Set "Script Path" to the template that you want to use e.g. "devon4j-mts/Jenkinsfile".
+
+image::./doc/images/pipelinesettings.PNG[]
+
 
 == How to run it
 
-TODO
+Simply run the job that you have created in the section before.
+For further instructions and information read the documentation of the particular template.
 
 == How to contribute
 
