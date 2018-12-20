@@ -154,6 +154,9 @@ image::./doc/images/mavensettings2.PNG[600,500]
 
 ==== Jenkins Preparation
 
+The following steps must be configured in Jenkins to integrate SonarQube with Jenkins.
+
+==== SonarQube scanner configuration in Jenkins
 
 [NOTE]
 ====
@@ -172,12 +175,19 @@ Jenkins must be configured to have default SonarQube scanner installation.
 
 image::./doc/images/jenkinsonarscanner.PNG[]
 
+===== Sonarqube Server configuration in Jenkins
+
+SonarQube must be configured in Jenkins, so that we can easily use the SonarQube server in our builds.
+
+Go to Jenkins -> Settings -> Configuration -> SonarQube Servers
+
+Add the following data
+
+image::./doc/images/sonarjenkins.PNG[600,500]
 
 ==== Technical SonarQube user and settings
 
 ===== Token for SonarQube
-
-* TODO add technical account before
 
 * Go to SonarQube.
 * Go to your account.
@@ -185,15 +195,6 @@ image::./doc/images/sonaraccount.PNG[600,500]
 * Go to Security tab.
 * Generate the token.
 
-===== Configure Sonarqube in Jenkins
-
-SonarQube must be confifgured in Jenkins, so that we can easily use the SonarQube server in our builds.
-
-Go to Jenkins -> Settings -> Configuration -> SonarQube Servers
-
-Add the following data
-
-image::./doc/images/sonarjenkins.PNG[600,500]
 
 ===== SonarQube Webhook to inform Jenkins
 
