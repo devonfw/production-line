@@ -1,4 +1,5 @@
-@Library('ProductionLineTemplateLib')
+@Library('ProductionLineTemplateLib@master') _
+
 import com.capgemini.productionline.configuration.*
 
 Jenkins jenkinsConfiguration = new Jenkins();
@@ -19,15 +20,39 @@ pipeline{
 
     stages {
         
-        stage('PL setup') {
+                 stage('PL setup') {
             steps{
                 script{
-                    println "Trying to install allure config"
-                    String mavenVersion = "2.7.0"
-                    String commandLineInstallerName = "Allure 2.7.0"
-                    String home = ""
+                    
+                    println "Trying to install all required plugins"
+                    //Install the required Jenkins plugins
+                    //The MTS template currently requires the following plugins to be present
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "allure-jenkins-plugin"])
+                    
+                    if( pluginsHaveBeenInstalled ) {
+                        println "New plugins were installed - Restart"
+                        // We need to restart Jenkins in case new plugins have been installed.
+                        //if set to false, then do a force restart
+                        //still requires to manually start the job again afterwards
+                        jenkinsConfiguration.restartJenkins(false);
+                    } else {
+                        println "No plugins were installed"
+                    }
 
+                                        //Add nodejs
+                    //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
+     
+                    println "Trying to install allure config"
+                    String commandLineInstallerName = "Allure 2.7.0"
+                    String mavenVersion = "2.7.0"
+                    String home = ""
                     AllureInstallSuccess = jenkinsConfiguration.addAllurePluginConfig(mavenVersion, commandLineInstallerName, home)
+                    
+                    println "Trying to install Maven3 config"
+                    String mavenName = "Maven3"
+                    String MavenVersion = "3.5.0"
+                    MavenInstallSuccess = jenkinsConfiguration.addMavenPluginConfig(MavenVersion, mavenName)
+
                     
                     //Add the required script approval
                     println "Adding required script approvals in Jenkins"
@@ -39,8 +64,7 @@ pipeline{
 
                 }
             }
-        }          
-        
+        }
         stage('Create Gitlab repo') {
             steps{
                 script{ 
@@ -99,4 +123,5 @@ pipeline{
             }
         }
     }
+
 }
