@@ -38,9 +38,6 @@ pipeline{
                     } else {
                         println "No plugins were installed"
                     }
-
-                                        //Add nodejs
-                    //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
      
                     println "Trying to install allure config"
                     String commandLineInstallerName = "Allure 2.7.0"
