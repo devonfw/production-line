@@ -20,6 +20,7 @@ This framework consist of eight test modules:
 To be able to run Jenkins MrChecker job under ProductionLine you need to configure below settings in Jenkins and Gitlab
 
 * Jenkins +
+** Add Jenkins Shared Library using documentation https://github.com/devonfw-forge/devon-production-line-shared-lib
 ** Install required plugins: +
 HTTP Request Plugin +
 Allure Jenkins Plugin +
@@ -47,6 +48,12 @@ Click "Create personal access token", you should receive notification about crea
 
 image::./images/created_token.JPG[600,500]
 
+The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps: +
+
+* Enter the Admin control panel
+* Select 'Users'
+* Select the user(s) in question and click 'Edit'
+* Scroll down to 'Access' and un-tick 'Can Create Group'
 
 == How to insert the Template
 
@@ -55,8 +62,8 @@ image::./images/created_token.JPG[600,500]
 Name: GITLAB_USER_PRIVATE_TOKEN +
 Default Value: <GITLAB_TOKEN_STRING_YOU_JUST_CREATED>
 
-* At the bottom of the job configuration for pipeline Definition choose: Pipeline script +
-* Copy the Jenkinsfile content +
+* Add the template +
+The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw-forge/devon-production-line.git
 * Save job configuration
 
 == How to run the Template
