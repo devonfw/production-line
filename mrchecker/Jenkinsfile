@@ -1,0 +1,124 @@
+@Library('ProductionLineTemplateLib@master') _
+
+import com.capgemini.productionline.configuration.*
+
+Jenkins jenkinsConfiguration = new Jenkins();
+GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN)
+
+pipeline{
+
+    agent any
+
+    //Jenkins Job Parameters
+    parameters { 
+        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: '', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
+        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MrChecker', description: 'Name of the repository inside GitLab that will be created.') 
+        string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Branch') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'automation test framework', description: 'Description of the repository.') 
+    }
+
+    stages {
+        
+                 stage('PL setup') {
+            steps{
+                script{
+                    
+                    println "Trying to install all required plugins"
+                    //Install the required Jenkins plugins
+                    //The MTS template currently requires the following plugins to be present
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "allure-jenkins-plugin"])
+                    
+                    if( pluginsHaveBeenInstalled ) {
+                        println "New plugins were installed - Restart"
+                        // We need to restart Jenkins in case new plugins have been installed.
+                        //if set to false, then do a force restart
+                        //still requires to manually start the job again afterwards
+                        jenkinsConfiguration.restartJenkins(false);
+                    } else {
+                        println "No plugins were installed"
+                    }
+     
+                    println "Trying to install allure config"
+                    String commandLineInstallerName = "Allure 2.7.0"
+                    String mavenVersion = "2.7.0"
+                    String home = ""
+                    AllureInstallSuccess = jenkinsConfiguration.addAllurePluginConfig(mavenVersion, commandLineInstallerName, home)
+                    
+                    println "Trying to install Maven3 config"
+                    String mavenName = "Maven3"
+                    String MavenVersion = "3.5.0"
+                    MavenInstallSuccess = jenkinsConfiguration.addMavenPluginConfig(MavenVersion, mavenName)
+
+                    
+                    //Add the required script approval
+                    println "Adding required script approvals in Jenkins"
+                    jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
+                    
+                    //Add the global maven settings credential
+                    //println "Trying to add credentials to maven global settings"
+                    //TODO will be skipped for now because it is not easy to add a credential to an existing global maven settings file
+
+                }
+            }
+        }
+        stage('Create Gitlab repo') {
+            steps{
+                script{ 
+                    //Check if group already exists
+                    if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
+                        //Create a group for devon
+                        // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
+                        gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
+                    }
+
+                    //Check if project already exists
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
+                        //Create a new public repository for MrChecker inside the Production Line based on the official repository
+                        gitlabConfiguration.createProject(
+                            params.GITLAB_CREATE_GROUP_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
+                            params.GITLAB_CREATE_BRANCH, 
+                            "https://github.com/devonfw/devonfw-testing.git",
+                            "public"
+                        )
+                    }
+                }
+            }
+        }
+     
+
+        stage('Create MrChecker Jenkins Job'){
+            steps{
+                script{
+                    //Disable Job Security
+                    jenkinsConfiguration.disableJobDSLScriptSecurity()
+
+                    //Build job
+                    jobDsl scriptText: """
+                        pipelineJob("MrChecker_Example_Tests") {
+                            description('Execute MrChecker example tests')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('*/develop')
+                                            scriptPath('mrchecker-app-under-test/pipelines/CI/Jenkinsfile_ProductionLine.groovy')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+                }
+            }
+        }
+    }
+
+}
