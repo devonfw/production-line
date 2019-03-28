@@ -199,6 +199,7 @@ image::./doc/images/sonarjenkins.PNG[600,500]
 
 * Go to SonarQube.
 * Go to your account.
+
 image::./doc/images/sonaraccount.PNG[600,500]
 * Go to Security tab.
 * Generate the token.
