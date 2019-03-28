@@ -156,9 +156,15 @@ image::./doc/images/mavensettings2.PNG[600,500]
 
 ==== Jenkins Preparation
 
-The following steps must be configured in Jenkins to integrate SonarQube with Jenkins.
+** Install required plugins: +
+HTTP Request Plugin +
+Allure Jenkins Plugin +
+** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
+
+image::./images/allure.JPG[500,400]
 
 ==== SonarQube scanner configuration in Jenkins
+The following steps must be configured in Jenkins to integrate SonarQube with Jenkins.
 
 [NOTE]
 ====
