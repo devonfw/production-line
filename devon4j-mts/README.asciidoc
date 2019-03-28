@@ -161,7 +161,7 @@ HTTP Request Plugin +
 Allure Jenkins Plugin +
 ** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
 
-image::./images/allure.JPG[500,400]
+image::./doc/images/allure.JPG[500,400]
 
 ==== SonarQube scanner configuration in Jenkins
 The following steps must be configured in Jenkins to integrate SonarQube with Jenkins.
