@@ -150,8 +150,8 @@ pipeline{
                 script{
                     PL_NAME = sh(returnStdout: true, script: "curl -v -H 'Content-Type: application/json' -H 'Authorization: $MICROPORTAL_TOKEN' 'http://microportal:8080/api/metadata' | jq -r '.engagementname'")   
                     PL_NAME = PL_NAME.trim()   
-                      }
-                    sh "cd devon4ng && cicdgen generate devon4ng --docker --plurl \""+PL_NAME+".dev.s2-eu.capgemini.com\" --groupid com.devonfw"                                           
+                }
+                sh "cd devon4ng && cicdgen generate devon4ng --docker --plurl \""+PL_NAME+".dev.s2-eu.capgemini.com\" --groupid com.devonfw"                                           
             }
         }
         stage('Pushing template to Gitlab') {
