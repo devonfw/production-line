@@ -1,7 +1,7 @@
 = Devon4j Template for Production Line
 :toc: macro
 
-image::images/pl.png[400,300] +
+image::images/pl.png[400,300]
 image::images/devonfw.png[400,300]
 
 === Overview
