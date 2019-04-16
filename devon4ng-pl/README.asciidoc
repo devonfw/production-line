@@ -76,5 +76,5 @@ image::./images/devon4ng.JPG[800,700]
 == How to run the Template
 
 * Build the job
-* As output of the build new Jenkins Pipline job "Devon4j_build_template" under Angular directory will be created and also new repository "devon/devon4ng" will be created in Gitlab.
-* Run "Devon4j_build_template" job
+* As output of the build new Jenkins Pipline job "Devon4ng_build_template" under Angular directory will be created and also new repository "devon/devon4ng" will be created in Gitlab.
+* Run "Devon4ng_build_template" job
