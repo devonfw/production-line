@@ -1,9 +1,8 @@
 = Devon4ng Template for Production Line
 :toc: macro
 
-image::images/pl.png[500,400]
-
-image::images/devonfw.png[500,400]
+image::images/pl.png[400,300]
+image::images/devonfw.png[400,300]
 
 === Overview
 
