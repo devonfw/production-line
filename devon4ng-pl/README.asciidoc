@@ -69,7 +69,7 @@ Default Value: <YOUR_LAM_CORP_ID>
 * Add the template +
 Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
 
-image::./images/devon4ng.JPG[600,500]
+image::./images/devon4ng.JPG[700,600]
 
 * Save job configuration
 
