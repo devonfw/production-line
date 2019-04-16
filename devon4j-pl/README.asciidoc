@@ -1,0 +1,79 @@
+= Devon4j Template for Production Line
+:toc: macro
+
+image::images/pl.png[PL Logo]
+image::images/devonfw.png[DevonFW Logo]
+
+=== Overview
+
+This template will configure your PL instance to have a 'ready to use' Java Devon template. It can be used as a starting point for your Angular projects. +
+This includes CICD files for a devonfw technology stack with configuration for:
+
+** docker deployment
+** pushing artifacts to nexus3
+
+
+
+
+== Prerequisites
+To be able to run Jenkins Devon4j job under ProductionLine you need to configure below settings in Jenkins and Gitlab
+
+* Jenkins +
+** Add Jenkins Shared Library using documentation https://github.com/devonfw-forge/devon-production-line-shared-lib
+** Install required plugins: +
+HTTP Request Plugin +
+Allure Jenkins Plugin +
+NodeJS Plugin +
+Jobs DSL Plugin
+** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
+
+image::./images/allure.JPG[500,400]
+image::./images/maven.JPG[500,400]
+
+* Gitlab +
+** Generate User Private Token +
+Go to your Profile in Gitlab +
+
+image::./images/profile.png[500,400]
+
+Next click on the pen icon +
+
+image::./images/pen.png[500,400]
+
+On the left menu choose Access Tokens and put token name and check fields like below +
+
+image::./images/token.JPG[600,500]
+
+Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
+
+image::./images/created_token.JPG[600,500]
+
+The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps: +
+
+* Enter the Admin control panel
+* Select 'Users'
+* Select the user(s) in question and click 'Edit'
+* Scroll down to 'Access' and un-tick 'Can Create Group'
+
+== How to insert the Template
+
+* Create new Jenkins Pipeline Job
+* In job configuration check "This project is parametrized", choose "String parameter and provide +
+Name: GITLAB_USER_PRIVATE_TOKEN +
+Default Value: <GITLAB_TOKEN_STRING_YOU_JUST_CREATED>
+
+Name: USERNAME +
+Default Value: <YOUR_LAM_CORP_ID>
+
+* Add the template +
+Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
+
+image::./images/devon4j.JPG[600,500]
+
+* Save job configuration
+
+== How to run the Template
+
+* Build the job
+* As output of the build new Jenkins Pipline job "Devon4ng_build_template" under Angular directory will be created and also new repository "devon/devon4ng" will be created in Gitlab.
+* Run "Devon4ng_build_template" job
