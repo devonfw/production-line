@@ -1,8 +1,9 @@
 = Devon4ng Template for Production Line
 :toc: macro
 
-image::images/pl.png[PL Logo]
-image::images/devonfw.png[DevonFW Logo]
+image::images/pl.png[500,400]
+
+image::images/devonfw.png[500,400]
 
 === Overview
 
@@ -69,7 +70,7 @@ Default Value: <YOUR_LAM_CORP_ID>
 * Add the template +
 Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
 
-image::./images/devon4ng.JPG[700,600]
+image::./images/devon4ng.JPG[800,700]
 
 * Save job configuration
 
