@@ -1,8 +1,8 @@
 = Devon4j Template for Production Line
 :toc: macro
 
-image::images/pl.png[PL Logo]
-image::images/devonfw.png[DevonFW Logo]
+image::images/pl.png[400,300] +
+image::images/devonfw.png[400,300]
 
 === Overview
 
@@ -46,7 +46,7 @@ image::./images/token.JPG[600,500]
 
 Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
 
-image::./images/created_token.JPG[600,500]
+image::./images/created_token.JPG[800,700]
 
 The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps: +
 
