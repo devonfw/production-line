@@ -116,7 +116,7 @@ pipeline{
                                     scm {
                                         git {
                                             remote {
-                                                url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                                url('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
                                             }
                                             branches('master')
                                             scriptPath('Jenkinsfile')
