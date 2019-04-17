@@ -6,7 +6,7 @@ image::images/devonfw.png[400,300]
 
 === Overview
 
-This template will configure your PL instance to have a 'ready to use' Java Devon template. It can be used as a starting point for your Angular projects. +
+This template will configure your PL instance to have a 'ready to use' Java Devon template. It can be used as a starting point for your Java projects. +
 This includes CICD files for a devonfw technology stack with configuration for:
 
 ** docker deployment
@@ -75,5 +75,5 @@ image::./images/devon4j.JPG[800,700]
 == How to run the Template
 
 * Build the job
-* As output of the build new Jenkins Pipline job "Devon4j_build_template" under Angular directory will be created and also new repository "devon/devon4j" will be created in Gitlab.
+* As output of the build new Jenkins Pipline job "Devon4j_build_template" under Java directory will be created and also new repository "devon/devon4j" will be created in Gitlab.
 * Run "Devon4j_build_template" job
