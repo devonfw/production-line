@@ -29,7 +29,7 @@ pipeline{
                     println "Trying to install all required plugins"
                     //Install the required Jenkins plugins
                     //The template currently requires the following plugins to be present
-                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin"])
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin", "GitLab+Plugin"])
                     
                     if( pluginsHaveBeenInstalled ) {
                         println "New plugins were installed - Restart"
@@ -157,5 +157,12 @@ pipeline{
             }
         }
 
+    }
+
+    post{
+        always{
+            cleanWs()
+            deleteDir()
+        }
     }
 }

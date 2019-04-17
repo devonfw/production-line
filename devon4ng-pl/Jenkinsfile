@@ -2,34 +2,54 @@
 
 import com.capgemini.productionline.configuration.*
 
-Jenkins jenkinsConfiguration = new Jenkins();
-GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN, ProductionLineGlobals.GITLAB_BASE_URL);
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+GitLab gitlabConfiguration;
 
 pipeline{
+
     agent any
 
-  tools {
+    tools {
         nodejs "NodeJS LTS"
     }
     //Jenkins Job Parameters
     parameters { 
-        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: '', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
-        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
-        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'devon4ng', description: 'Name of the repository inside GitLab that will be created.') 
-        string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Branch') 
-        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'devon4ng PL template', description: 'Description of the repository.') 
-        string(name: 'GITLAB_CLONE_URL', defaultValue: '', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
-        string(name: 'USERNAME', defaultValue: '', description: 'Username of a Production Line Gitlab User that can be used to create repositories.')     
+        string(name: 'PROJECT_NAME', defaultValue: 'devonfw', description: 'Name of the project. The word "-frontend" will be appended.') 
+        string(name: 'GROUP_ID', defaultValue: 'com.devonfw', description: 'The group id of the project.') 
+        credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'gitlab-api-token', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
+        // string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'wzsJ2ovaaspLZDe8_eL8', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
+        // string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Branch') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'Devon for angular PL template', description: 'Description of the repository.')
+        // credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'gitlab-user', description: 'Gitlab integration user credentials', name: 'GITLAB_CREDENTIALS', required: true)
+        choice choices: ['none', 'docker', 'openshift'], description: 'Choose the environment where you want to deploy', name: 'DEPLOY'
+    }
+
+    environment {
+        PORT='8080'
     }
     
     stages {
         stage('PL setup') {
             steps{
                 script{
+                    PROJECT_NAME_FULL = params.PROJECT_NAME + "-frontend"
+
                     println "Trying to install all required plugins"
                     //Install the required Jenkins plugins
                     //The template currently requires the following plugins to be present
-                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin"])
+                    pluginsToInstall = ["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin", "GitLab+Plugin"]
+
+                    // To deploy at docker, some extra plugins are required
+                    if (params.DEPLOY == "docker" || params.DEPLOY == "openshift"){
+                        pluginsToInstall << "Docker+Plugin" << "Docker+build+step+plugin" << "Docker+Pipeline+Plugin" << "JClouds+Plugin"
+                    }
+
+                    if (params.DEPLOY == "openshift") {
+                        pluginsToInstall << "OpenShift+Client+Plugin"
+                    }
+
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(pluginsToInstall)
                     
                     if( pluginsHaveBeenInstalled ) {
                         println "New plugins were installed - Restart"
@@ -42,26 +62,154 @@ pipeline{
                     }
 
                     //Add nodejs
-                    //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
                     println "Trying to install nodejs config"
-                    String installName = "NodeJS 10.14.0"
-                    String nodeJS_Version = "10.14.0"
+                    String installName = "NodeJS 10.16.0"
+                    String nodeJS_Version = "10.16.0"
                     String npmPackages = "yarn"
                     String home = ""
                     long npmPackagesRefreshHours = 100
 
                     nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
                     
+
+                    if (params.DEPLOY == "openshift"){
+                        println "Trying to install docker as custom tool"
+                        
+                        jenkinsConfiguration.addCustomTool("docker-global", "", """if ! which docker > /dev/null; then
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
+    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian \$(lsb_release -cs) stable"
+    sudo apt-get update
+    sudo apt-get install -y docker-ce-cli
+    docker -v
+fi""", "/usr/bin")
+                    }
+
+                    if (params.DEPLOY == "openshift") {
+                        println "openshift"
+                        jenkinsConfiguration.installOpenshift("OpenShiftv3.11.0", "", """
+if [ ! -f /opt/oc3.11.0/oc ]; then
+  echo "oc3.11.0 does not exist."
+  wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+  tar -xvzf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+  sudo mv openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit /opt/oc3.11.0
+else
+  echo "oc3.11.0 exist."
+fi
+                        """, "/opt/oc3.11.0")
+                    }
+
+                    // Get the Pl Url
+                    env.PL_URL = JENKINS_URL.replace("https://", "").split("/")[0]
+                    
                     //Add the required script approval
                     println "Adding required script approvals in Jenkins"
-                    jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")                 
+                    jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
                 }
             }
-        }  
-        stage('Create devon4ng repo') {
+        }
+
+        stage('Configuring docker'){
+            when {
+                beforeInput true
+                equals expected: null, actual: env.DOCKER_HOST
+                equals expected: 'docker', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the docker host'
+                parameters {
+                    string defaultValue: 'tcp://127.0.0.1:2375', description: 'Remote docker url', name: 'DOCKER_HOST', trim: true
+                }
+            }
+            steps {
+                script {
+                    jenkinsConfiguration.addJenkinsGlobalEnvironmentVariable("DOCKER_HOST", DOCKER_HOST)
+
+                    tool 'docker-global'
+
+                    def network = sh returnStdout: true, script: """docker network ls -f name=application | sed '2q;d' """
+                    if (network?.trim() == '') {
+                        sh "docker network create application"
+                    } else {
+                        println "application network already exists"
+                    }
+                }
+            }
+        }
+        
+        stage('Configuring Openshift'){
+            when {
+                beforeInput true
+                equals expected: null, actual: env.DOCKER_HOST
+                equals expected: 'openshift', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the openshift host'
+                parameters {
+                    string defaultValue: 'default', description: 'Openshift configuration name', name: 'OC_NAME', trim: true
+                    string defaultValue: 'https://ocp.itaas.s2-eu.capgemini.com', description: 'Openshift url', name: 'OC_URL', trim: true
+                    string defaultValue: 's2portaldev', description: 'Openshift project', name: 'OC_PROJECT', trim: true
+                    credentials credentialType: 'com.openshift.jenkins.plugins.OpenShiftTokenCredentials', description: 'The openshift auth token. You can get it with the command: oc whoami -t', name: 'OC_TOKEN', required: true
+                    credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'nexus-devon', description: 'Nexus registry integration user credentials', name: 'DOCKER_REGISTRY_CREDENTIALS', required: true)
+                }
+            }
+            environment {
+                NGINX_TAG='alpine-perl'
+                CPU='100m'
+                MEMORY='200Mi'
+            }
+            tools {
+                oc 'OpenShiftv3.11.0'
+            }
+            steps {
+                script {
+                    jenkinsConfiguration.addOpenshiftGlobalConfiguration(OC_NAME, OC_URL, OC_TOKEN, OC_PROJECT)
+
+                    env.OC_URL = OC_URL
+                    env.OC_PROJECT = OC_PROJECT
+
+                    /*
+                    // def template = httpRequest consoleLogResponseBody: true, httpMode: 'GET', url: "http://gitlab-core:80/gitlab/darrodri/devonfw-shop-floor/raw/feature/devon4ng-template/dsf4openshift/openshift-devonfw-deployment/templates/devon4ng.json"
+                    def template = httpRequest consoleLogResponseBody: true, httpMode: 'GET', url: "https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4ng/devon4ng.json"
+
+                    // sh """echo '${template.getContent()}' > template.json """
+                    writeJSON file: 'template.json', json: template
+                    sh """chmod 777 template.json """
+                    */
+                    sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4ng/devon4ng.yaml"""
+
+                    env.SECRET_NAME = "docker-registry-" + env.PL_URL.split("\\.")[0]
+
+                    openshift.withCluster('default'){
+                        openshift.withProject(env.OC_PROJECT) {
+                            // Create secret if not exist
+                            def secret = openshift.selector('secret', "${env.SECRET_NAME}")
+                            if (!secret.exists()) {
+                                echo "secret not exist"
+                                withCredentials([usernamePassword(credentialsId: "${DOCKER_REGISTRY_CREDENTIALS}", passwordVariable: 'drpass', usernameVariable: 'druser')]) {
+                                    openshift.create('secret', "docker-registry ${env.SECRET_NAME} --docker-server=docker-registry-${env.PL_URL} --docker-username=${druser} --docker-password=${drpass} --docker-email=no-reply@email.com")
+                                }
+                            }
+
+                            // Create environments for dev, uat and prod
+                            openshift.create( openshift.process( '', '-f', 'devon4ng.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "NGINX_TAG=${NGINX_TAG}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4ng.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "NGINX_TAG=${NGINX_TAG}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4ng.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-prod", "-p", "NGINX_TAG=${NGINX_TAG}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Create Devon4ng repo') {
             steps{
-                script{          
+                script{
                     println "Trying to create gitlab group"
+                    // Get GitLab Token and define GitLab configuration.
+                    def token = jenkinsConfiguration.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
+                    gitlabConfiguration = new GitLab(this, token, ProductionLineGlobals.GITLAB_BASE_URL);
+
                     //Check if group already exists
                     if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
                         println "No group existing yet, trying to create"
@@ -73,24 +221,25 @@ pipeline{
                     }
                     //Check if project already exists
                     println "Trying co create Gitlab project"
-                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL) == ""){
                         println "No project with the same name exists yet, trying to create"
                         //Create a new public repository for devon4ng in the Production Line
                         gitlabConfiguration.createProject(
                             params.GITLAB_CREATE_GROUP_NAME, 
-                            params.GITLAB_CREATE_PROJECT_NAME, 
-                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            PROJECT_NAME_FULL, 
+                            PROJECT_NAME_FULL, 
                             params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
-                            params.GITLAB_CREATE_BRANCH, 
-                            params.GITLAB_CLONE_URL,
+                            "develop", 
                             "public"
                         )
                     } else {
                         println "Project with the same name already exists"
                     }
+                    gitlabConfiguration.createWebhook(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "http://jenkins-core:8080/jenkins/project/${PROJECT_NAME}/${PROJECT_NAME_FULL}", '')
                 }
             }
         }
+
         stage('Generate Angular template job'){
             steps{
                 println "Trying to create Jenkins jobs"
@@ -102,63 +251,98 @@ pipeline{
                     //Prepare folders in Jenkins for the jobs
                     println "Trying to create folder for jobs"
                     jobDsl scriptText: """
-                        folder("Angular"){
-                            description('Jobs generated by the devon4ng Template.')
+                        folder("${PROJECT_NAME}"){
+                            description('Jobs for ${PROJECT_NAME} project.')
                         }
                         """
+
                     //Build job
                     println "Trying to create Build job"
                     jobDsl scriptText: """
-                        pipelineJob("Angular/devon4ng_build_template") {
+                        multibranchPipelineJob("${PROJECT_NAME}/${PROJECT_NAME_FULL}") {
                             description('Build job for devon4ng template.')
-                            definition {
-                                cpsScm {
-                                    scm {
-                                        git {
-                                            remote {
-                                                url('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
-                                            }
-                                            branches('master')
-                                            scriptPath('Jenkinsfile')
-                                            extensions { }  // required as otherwise it may try to tag the repo!
-                                        }
-                                    }
+                            branchSources {
+                                git {
+                                    remote('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git')
+                                    credentialsId('github-ci')
+                                    includes('master release* develop')
+                                }
+                            }
+                            orphanedItemStrategy {
+                                discardOldItems {
+                                    numToKeep(10)
                                 }
                             }
                         }
                         """
+
                     //Enable Job Security again
                     println "Enable job dsl security"
                     jenkinsConfiguration.enableJobDSLScriptSecurity()
                 }
             }
-        }   
+        }
+    
         stage('Install angular & cicdgen') {
             steps{
-             cleanWs()
-             deleteDir()
+                cleanWs()
+                deleteDir()
+
                 sh 'npm i -g @angular/cli @devonfw/cicdgen'
             }
-        }     
+        }
+      
         stage('ng new') {
             steps{
-                sh 'ng new devon4ng --routing --defaults --skip-install –style scss'
-            }
-        }       
-        stage('Create cicdgen Angular template') {
-            steps{
-                script{
-                    PL_NAME = sh(returnStdout: true, script: "curl -v -H 'Content-Type: application/json' -H 'Authorization: $MICROPORTAL_TOKEN' 'http://microportal:8080/api/metadata' | jq -r '.engagementname'")   
-                    PL_NAME = PL_NAME.trim()   
-                }
-                sh "cd devon4ng && cicdgen generate devon4ng --docker --plurl \""+PL_NAME+".dev.s2-eu.capgemini.com\" --groupid com.devonfw"                                           
+                sh "ng new ${PROJECT_NAME_FULL} --routing --defaults --skip-install --style scss"
             }
         }
-        stage('Pushing template to Gitlab') {
-            steps{             
-                sh 'cd devon4ng && git remote add origin http://${USERNAME}@gitlab-core:80/gitlab/${GITLAB_CREATE_GROUP_NAME}/${GITLAB_CREATE_PROJECT_NAME}.git && git push --set-upstream origin master'
+        
+        stage('Create cicdgen Angular template') {
+            steps{
+                script{ 
+                    def dockerString = ''
+                    def ocString = ''
+
+                    if (params.DEPLOY == 'docker'){
+                        dockerString = "--docker --plurl ${env.PL_URL} "
+                    }
+
+                    if (params.DEPLOY == 'openshift'){
+                        ocString = "--openshift --ocurl ${env.OC_URL} --ocn ${env.OC_PROJECT} --plurl ${env.PL_URL} "
+                    }
+                
+                    dir(PROJECT_NAME_FULL) {
+                        sh 'git config user.email "jenkins-pl@capgemini.com"'
+                        sh 'git config user.name "Jenkins"'
+                        sh "cicdgen generate devon4ng ${ocString}${dockerString}--groupid ${params.GROUP_ID}"
+                    }   
+                }
             }
         }
 
+        stage('Pushing template to Gitlab') {
+            steps{
+                script {
+                    dir(PROJECT_NAME_FULL){
+                        def token = jenkinsConfiguration.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
+                        sh "git status && git remote add origin http://oauth2:${token}@gitlab-core:80/gitlab/${GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git"
+                        sh "git checkout -b develop && git push --set-upstream origin develop"
+                        sh "git checkout master && git push origin master"
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "master", "40", "30");
+                        gitlabConfiguration.unprotectBranch(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "develop");
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "develop", "30", "30");
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "release/*", "40", "30");
+                    }    
+                }
+            }
+        }
+    }
+
+    post{
+        always{
+            cleanWs()
+            deleteDir()
+        }
     }
 }
