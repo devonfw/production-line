@@ -6,7 +6,7 @@ image::images/devonfw.png[400,300]
 
 === Overview
 
-This template will configure your PL instance to have a 'ready to use' Java Devon template. It can be used as a starting point for your Angular projects. +
+This template will configure your PL instance to have a 'ready to use' Java Devon template. It can be used as a starting point for your Java projects. +
 This includes CICD files for a devonfw technology stack with configuration for:
 
 ** docker deployment
