@@ -53,7 +53,7 @@ The GitLab API user needs to have API access and the rights to create a new grou
 * Enter the Admin control panel
 * Select 'Users'
 * Select the user(s) in question and click 'Edit'
-* Scroll down to 'Access' and un-tick 'Can Create Group'
+* Scroll down to 'Access' and enable 'Can Create Group'
 
 == How to insert the Template
 
