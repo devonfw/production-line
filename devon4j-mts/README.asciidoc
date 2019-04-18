@@ -174,7 +174,8 @@ The following steps must be configured in Jenkins to integrate SonarQube with Je
 Jenkins must be configured to have default SonarQube scanner installation.
 
 * Go to Jenkins.
-* Go to "Configure Custom Tools".
+* Go to Manage Jenkins clicking on left menu.
+* Go to "Global Tool Configuration".
 * Go to the "SonarQube Scanner" section.
 * Add a new Sonarqube scanner with  
 ** name: SonarQube
@@ -212,7 +213,7 @@ A part of the Build Job will ask SonarQube if the quality gate has been passed. 
 . Go to SonarQube
 . Select 'Administration'
 . Select 'Configuration', 'General Settings' and select 'Webhooks' in the left menu
-. Add the following webhook image:[SonarqubeWebhook.png,float="right"]
+. Add the following webhook image::./doc/images/SonarqubeWebhook.png[float="right"]
 . Press 'Save'
 
 === Deployment Requirements
