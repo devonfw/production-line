@@ -213,7 +213,10 @@ A part of the Build Job will ask SonarQube if the quality gate has been passed. 
 . Go to SonarQube
 . Select 'Administration'
 . Select 'Configuration', 'General Settings' and select 'Webhooks' in the left menu
-. Add the following webhook image::./doc/images/SonarqubeWebhook.png[float="right"]
+. Add the following webhook
+
+image::./doc/images/SonarqubeWebhook.png[float="right"]
+
 . Press 'Save'
 
 === Deployment Requirements
