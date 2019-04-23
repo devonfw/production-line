@@ -68,6 +68,10 @@ Default Value: <YOUR_LAM_CORP_ID>
 * Add the template +
 Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
 
+* https://github.com/devonfw-forge/devon-production-line.git
+
+* devon4j-pl/Jenkinsfile
+
 image::./images/devon4j.JPG[800,700]
 
 * Save job configuration
