@@ -69,8 +69,8 @@ Default Value: <YOUR_LAM_CORP_ID>
 * Add the template +
 Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
 
-https://github.com/devonfw-forge/devon-production-line.git
-devon4ng-pl/Jenkinsfile
+* https://github.com/devonfw-forge/devon-production-line.git
+* devon4ng-pl/Jenkinsfile
 
 image::./images/devon4ng.JPG[800,700]
 
