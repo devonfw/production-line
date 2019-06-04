@@ -12,7 +12,7 @@ pipeline {
     
     //Jenkins Job Parameters
     parameters { 
-        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'BSXJct1gp1xozXCmfsc_', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'REPLACE_ME', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
