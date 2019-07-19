@@ -14,7 +14,7 @@ pipeline {
     parameters { 
         string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'REPLACE_ME', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'GitLab group name where the repository will be created.') 
-        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'GitLab repository name where My Thai Star will be cloned.') 
+        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'GitLab repository name where My Thai Star will be cloned to.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'GitLab repository default branch name.') 
         string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample Devon4J application', description: 'GitLab repository description.') 
         string(name: 'GITLAB_CLONE_URL', defaultValue: 'https://github.com/devonfw/my-thai-star.git', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
