@@ -72,7 +72,7 @@ pipeline{
                     nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
                     
 
-                    if (params.DEPLOY == "openshift"){
+                    if (params.DEPLOY == "docker"){
                         println "Trying to install docker as custom tool"
                         
                         jenkinsConfiguration.addCustomTool("docker-global", "", """if ! which docker > /dev/null; then
