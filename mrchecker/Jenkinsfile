@@ -108,7 +108,7 @@ pipeline{
                                                 url('http://gitlab-core:80/gitlab/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
                                             }
                                             branches('*/develop')
-                                            scriptPath('mrchecker-app-under-test/pipelines/CI/Jenkinsfile_ProductionLine.groovy')
+                                            scriptPath('template/pipelines/CI/Jenkinsfile_ProductionLine.groovy')
                                             extensions { }  // required as otherwise it may try to tag the repo!
                                         }
                                     }
