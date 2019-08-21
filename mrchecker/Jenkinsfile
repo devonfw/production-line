@@ -3,7 +3,7 @@
 import com.capgemini.productionline.configuration.*
 
 Jenkins jenkinsConfiguration = new Jenkins();
-GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN)
+GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN, ProductionLineGlobals.GITLAB_BASE_URL);
 
 pipeline{
 
