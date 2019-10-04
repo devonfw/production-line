@@ -9,24 +9,18 @@ pipeline{
 
     agent any
 
-    tools {
-        nodejs "NodeJS LTS"
-    }
     //Jenkins Job Parameters
     parameters { 
         string(name: 'PROJECT_NAME', defaultValue: 'devonfw', description: 'Name of the project. The word "-frontend" will be appended.') 
         string(name: 'GROUP_ID', defaultValue: 'com.devonfw', description: 'The group id of the project.') 
         credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'gitlab-api-token', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
-        // string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'wzsJ2ovaaspLZDe8_eL8', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
-        // string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Branch') 
         string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'Devon for angular PL template', description: 'Description of the repository.')
-        // credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'gitlab-user', description: 'Gitlab integration user credentials', name: 'GITLAB_CREDENTIALS', required: true)
         choice choices: ['none', 'docker', 'openshift'], description: 'Choose the environment where you want to deploy', name: 'DEPLOY'
     }
 
     environment {
-        PORT='8080'
+        NODE_VERSION = '10.16.0'
     }
     
     stages {
@@ -156,8 +150,9 @@ fi
             }
             environment {
                 NGINX_TAG='alpine-perl'
+                PORT='8080'
                 CPU='100m'
-                MEMORY='200Mi'
+                MEMORY='400Mi'
             }
             tools {
                 oc 'OpenShiftv3.11.0'
@@ -169,19 +164,11 @@ fi
                     env.OC_URL = OC_URL
                     env.OC_PROJECT = OC_PROJECT
 
-                    /*
-                    // def template = httpRequest consoleLogResponseBody: true, httpMode: 'GET', url: "http://gitlab-core:80/gitlab/darrodri/devonfw-shop-floor/raw/feature/devon4ng-template/dsf4openshift/openshift-devonfw-deployment/templates/devon4ng.json"
-                    def template = httpRequest consoleLogResponseBody: true, httpMode: 'GET', url: "https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4ng/devon4ng.json"
-
-                    // sh """echo '${template.getContent()}' > template.json """
-                    writeJSON file: 'template.json', json: template
-                    sh """chmod 777 template.json """
-                    */
                     sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4ng/devon4ng.yaml"""
 
                     env.SECRET_NAME = "docker-registry-" + env.PL_URL.split("\\.")[0]
 
-                    openshift.withCluster('default'){
+                    openshift.withCluster(env.OC_NAME){
                         openshift.withProject(env.OC_PROJECT) {
                             // Create secret if not exist
                             def secret = openshift.selector('secret', "${env.SECRET_NAME}")
@@ -260,7 +247,7 @@ fi
                     println "Trying to create Build job"
                     jobDsl scriptText: """
                         multibranchPipelineJob("${PROJECT_NAME}/${PROJECT_NAME_FULL}") {
-                            description('Build job for devon4ng template.')
+                            description('Build job for ${PROJECT_NAME_FULL}.')
                             branchSources {
                                 git {
                                     remote('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git')
@@ -284,6 +271,9 @@ fi
         }
     
         stage('Install angular & cicdgen') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
             steps{
                 cleanWs()
                 deleteDir()
@@ -293,12 +283,18 @@ fi
         }
       
         stage('ng new') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
             steps{
                 sh "ng new ${PROJECT_NAME_FULL} --routing --defaults --skip-install --style scss"
             }
         }
         
         stage('Create cicdgen Angular template') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
             steps{
                 script{ 
                     def dockerString = ''
@@ -327,7 +323,14 @@ fi
                     dir(PROJECT_NAME_FULL){
                         def token = jenkinsConfiguration.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
                         sh "git status && git remote add origin http://oauth2:${token}@gitlab-core:80/gitlab/${GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git"
-                        sh "git checkout -b develop && git push --set-upstream origin develop"
+                        sh "git checkout -b develop"
+                        
+                        // modify poms with the correct version for develop: 0.0.1
+                        def packageJson = readJSON file: 'package.json'
+                        packageJson.version = '0.0.1'
+                        writeJSON file: 'package.json', json: packageJson, pretty: 2
+                        
+                        sh """git add . && git commit -m "start 0.0.1 version" && git push --set-upstream origin develop"""
                         sh "git checkout master && git push origin master"
                         gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "master", "40", "30");
                         gitlabConfiguration.unprotectBranch(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "develop");
