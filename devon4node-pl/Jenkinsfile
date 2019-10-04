@@ -1,4 +1,4 @@
-@Library('ProductionLineTemplateLib@release/1.1')
+@Library('ProductionLineTemplateLib')
 
 import com.capgemini.productionline.configuration.*
 
