@@ -1,45 +1,53 @@
-@Library('ProductionLineTemplateLib@release/1.1')
+@Library('ProductionLineTemplateLib')
 
 import com.capgemini.productionline.configuration.*
 
 JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
 GitLab gitlabConfiguration;
+OpenshiftConfiguration openshiftConfiguration = new OpenshiftConfiguration(this);
 
 pipeline{
+    
     agent any
 
     //Jenkins Job Parameters
     parameters { 
-        string(name: 'PROJECT_NAME', defaultValue: 'devonfw', description: 'Name of the project. The word "-backend" will be appended.') 
+        string(name: 'PROJECT_NAME', defaultValue: 'devonfw', description: 'Name of the project.') 
+        string(name: 'PROJECT_SUFFIX', defaultValue: 'node', description: 'Suffix of the project. For example, if your project name is devonfw and your suffix is node, the project name will be devonfw-node.') 
         string(name: 'GROUP_ID', defaultValue: 'com.devonfw', description: 'The group id of the project.') 
         credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'gitlab-api-token', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
-        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
-        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'Devon for node PL template', description: 'Description of the repository.')
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'devonfw for node PL template', description: 'Description of the repository.')
         choice choices: ['none', 'docker', 'openshift'], description: 'Choose the environment where you want to deploy', name: 'DEPLOY'    
     }
 
     environment {
-        NODE_VERSION = '10.16.0'
+        NODE_VERSION = '10.17.0'
     }
     
     stages {
         stage('PL setup') {
             steps{
-                script{
-                    PROJECT_NAME_FULL = params.PROJECT_NAME + "-backend"
+                script {
+                    if (params.DEPLOY == 'docker' && jenkinsConfiguration.getLastStableBuild('UTILS/Docker_Configuration') == null) {
+                        error "In order to deploy using docker, you need to execute the job UTILS/Docker_Configuration as prerequisite"
+                    }
+                    if (params.DEPLOY == 'openshift' && jenkinsConfiguration.getLastStableBuild('UTILS/Openshift_Configuration') == null) {
+                        error "In order to deploy using openshift, you need to execute the job UTILS/Openshift_Configuration as prerequisite"
+                    }
+                    PROJECT_NAME_FULL = params.PROJECT_NAME + "-" + params.PROJECT_SUFFIX
 
                     println "Trying to install all required plugins"
                     //Install the required Jenkins plugins
                     //The template currently requires the following plugins to be present
-                    pluginsToInstall = ["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin", "GitLab+Plugin"]
+                    def pluginsToInstall = ["ssh-credentials", "custom-tools-plugin", "http_request", "job-dsl", "sonar", "ansible", "pipeline-maven", "nodejs", "gitlab-plugin"]
 
-                    // To deploy at docker, some extra plugins are required
-                    if (params.DEPLOY == "docker"){
-                        pluginsToInstall << "Docker+Plugin" << "Docker+build+step+plugin" << "Docker+Pipeline+Plugin" << "JClouds+Plugin"
+                    if (params.DEPLOY == 'docker') {
+                        pluginsToInstall << "docker-plugin" << "docker-build-step" << "docker-workflow" << "jclouds-jenkins"
                     }
 
-                    if (params.DEPLOY == "openshift") {
-                        pluginsToInstall << "OpenShift+Client+Plugin"
+                    if (params.DEPLOY == 'openshift') {
+                        pluginsToInstall << 'openshift-client'
                     }
 
                     def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(pluginsToInstall)
@@ -50,48 +58,20 @@ pipeline{
                         //if set to false, then do a force restart
                         //still requires to manually start the job again afterwards
                         jenkinsConfiguration.restartJenkins(false);
+                        error "Restarting Jenkins, please execute pipeline after restart"
                     } else {
                         println "No plugins were installed"
                     }
 
                     //Add nodejs
-                    //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
                     println "Trying to install nodejs config"
                     String installName = "NodeJS ${NODE_VERSION}"
-                    String nodeJS_Version = "${NODE_VERSION}"
+                    String nodeJS_Version = NODE_VERSION
                     String npmPackages = "yarn"
                     String home = ""
                     long npmPackagesRefreshHours = 100
 
                     nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
-
-                    if (params.DEPLOY == "docker"){
-                        println "Trying to install docker as custom tool"
-                        
-                        jenkinsConfiguration.addCustomTool("docker-global", "", """if ! which docker > /dev/null; then
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
-    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian \$(lsb_release -cs) stable"
-    sudo apt-get update
-    sudo apt-get install -y docker-ce-cli
-    docker -v
-fi""", "/usr/bin")
-                    }
-
-                    if (params.DEPLOY == "openshift") {
-                        println "openshift"
-                        jenkinsConfiguration.installOpenshift("OpenShiftv3.11.0", "", """
-if [ ! -f /opt/oc3.11.0/oc ]; then
-  echo "oc3.11.0 does not exist."
-  wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
-  tar -xvzf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
-  sudo mv openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit /opt/oc3.11.0
-else
-  echo "oc3.11.0 exist."
-fi
-                        """, "/opt/oc3.11.0")
-                    }
 
                     // Get the Pl Url
                     env.PL_URL = JENKINS_URL.replace("https://", "").split("/")[0]
@@ -102,73 +82,40 @@ fi
                 }
             }
         }
-
-        stage('Configuring docker'){
-            when {
-                beforeInput true
-                equals expected: null, actual: env.DOCKER_HOST
-                equals expected: 'docker', actual: params.DEPLOY
-            }
-            input {
-                message 'Introduce the docker host'
-                parameters {
-                    string defaultValue: 'tcp://127.0.0.1:2375', description: 'Remote docker url', name: 'DOCKER_HOST', trim: true
-                }
-            }
-            steps {
-                script {
-                    jenkinsConfiguration.addJenkinsGlobalEnvironmentVariable("DOCKER_HOST", DOCKER_HOST)
-
-                    tool 'docker-global'
-
-                    def network = sh returnStdout: true, script: """docker network ls -f name=application | sed '2q;d' """
-                    if (network?.trim() == '') {
-                        sh "docker network create application"
-                    } else {
-                        println "application network already exists"
-                    }
-                }
-            }
-        }
         
         stage('Configuring Openshift'){
             when {
                 beforeInput true
-                equals expected: null, actual: env.DOCKER_HOST
                 equals expected: 'openshift', actual: params.DEPLOY
             }
             input {
                 message 'Introduce the openshift host'
                 parameters {
                     string defaultValue: 'default', description: 'Openshift configuration name', name: 'OC_NAME', trim: true
-                    string defaultValue: 'https://ocp.itaas.s2-eu.capgemini.com', description: 'Openshift url', name: 'OC_URL', trim: true
-                    string defaultValue: 's2portaldev', description: 'Openshift project', name: 'OC_PROJECT', trim: true
-                    credentials credentialType: 'com.openshift.jenkins.plugins.OpenShiftTokenCredentials', description: 'The openshift auth token. You can get it with the command: oc whoami -t', name: 'OC_TOKEN', required: true
                     credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'nexus-devon', description: 'Nexus registry integration user credentials', name: 'DOCKER_REGISTRY_CREDENTIALS', required: true)
                 }
             }
             environment {
                 PORT='3000'
                 CPU='100m'
-                MEMORY='200Mi'
+                MEMORY='512Mi'
             }
             tools {
                 oc 'OpenShiftv3.11.0'
             }
             steps {
                 script {
-                    jenkinsConfiguration.addOpenshiftGlobalConfiguration(OC_NAME, OC_URL, OC_TOKEN, OC_PROJECT)
+                    if(!openshiftConfiguration.existsOpenshiftGlobalConfiguration(OC_NAME)) {
+                        error "Cluster configuration called ${OC_NAME} does not exists, please create it. You can use the UTILS/Openshift_Configuration template."
+                    }
+                    env.OC_NAME = OC_NAME
 
-                    env.OC_URL = OC_URL
-                    env.OC_PROJECT = OC_PROJECT
-
-                    // Download template from devonfw shop floor
                     sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4node/devon4node.yaml"""
 
                     env.SECRET_NAME = "docker-registry-" + env.PL_URL.split("\\.")[0]
 
                     openshift.withCluster(env.OC_NAME){
-                        openshift.withProject(env.OC_PROJECT) {
+                        openshift.withProject() {
                             // Create secret if not exist
                             def secret = openshift.selector('secret', "${env.SECRET_NAME}")
                             if (!secret.exists()) {
@@ -179,9 +126,9 @@ fi
                             }
 
                             // Create environments for dev, uat and prod
-                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
-                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
-                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-prod", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=develop"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=uat"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-prod", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=production"  ) )
                         }
                     }
                 }
@@ -193,7 +140,7 @@ fi
                 script{          
                     println "Trying to create gitlab group"
                     // Get GitLab Token and define GitLab configuration.
-                    def token = jenkinsConfiguration.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
+                    def token = GitLab.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
                     gitlabConfiguration = new GitLab(this, token, ProductionLineGlobals.GITLAB_BASE_URL);
 
                     //Check if group already exists
@@ -267,7 +214,7 @@ fi
                 }
             }
         }   
-        stage('Install nestjs/cli & cicdgen') {
+        stage('Install devon4node & cicdgen') {
             tools {
                 nodejs "NodeJS ${NODE_VERSION}"
             }
@@ -275,15 +222,15 @@ fi
                 cleanWs()
                 deleteDir()
                 
-                sh 'npm i -g @nestjs/cli @devonfw/cicdgen'
+                sh 'npm i -g @devon4node/cli @devonfw/cicdgen'
             }
         }     
-        stage('nest new') {
+        stage('devon4node new') {
             tools {
                 nodejs "NodeJS ${NODE_VERSION}"
             }
             steps{
-                sh "nest new ${PROJECT_NAME_FULL} -s -p yarn"
+                sh "devon4node new ${PROJECT_NAME_FULL} -n -s"
             }
         }       
         stage('Create cicdgen Node template') {
@@ -300,10 +247,10 @@ fi
                     }
 
                     if (params.DEPLOY == 'openshift'){
-                        ocString = "--openshift --ocurl ${env.OC_URL} --ocn ${env.OC_PROJECT} --plurl ${env.PL_URL} "
+                        ocString = "--openshift --ocname ${env.OC_NAME} --plurl ${env.PL_URL} "
                     }
                 
-                    dir(PROJECT_NAME_FULL){
+                    dir(PROJECT_NAME_FULL) {
                         sh 'git config user.email "jenkins-pl@capgemini.com"'
                         sh 'git config user.name "Jenkins"'
                         sh "cicdgen generate devon4node ${ocString}${dockerString}--groupid ${params.GROUP_ID}"
@@ -311,15 +258,15 @@ fi
                 }
             }
         }
+
         stage('Pushing template to Gitlab') {
             steps{             
                 script {
                     dir(PROJECT_NAME_FULL){
-                        def token = jenkinsConfiguration.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
+                        def token = GitLab.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
                         sh "git status && git remote add origin http://oauth2:${token}@gitlab-core:80/gitlab/${GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git"
                         sh "git checkout -b develop"
                         
-                        // modify poms with the correct version for develop: 0.0.1
                         def packageJson = readJSON file: 'package.json'
                         packageJson.version = '0.0.1'
                         writeJSON file: 'package.json', json: packageJson, pretty: 2
@@ -330,11 +277,11 @@ fi
                         gitlabConfiguration.unprotectBranch(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "develop");
                         gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "develop", "30", "30");
                         gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "release/*", "40", "30");
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "release", "40", "30");
                     }    
                 }
             }
         }
-
     }
 
     post{
