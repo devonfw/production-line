@@ -1,0 +1,34 @@
+@Library('ProductionLineTemplateLib')
+
+import com.capgemini.productionline.configuration.SonarQube;
+
+SonarQube sonar = new SonarQube(this, 'admin');
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'plugin_download_url', defaultValue: '', description: 'Download URL for the plugin to install', trim: true)
+    }
+
+
+    stages {
+        stage('Download & install the plugin') {
+            steps {
+                script {
+                    sh "wget ${params.plugin_download_url}"
+                    sh "mkdir -p /pl_component_mounts/sonarqube/sonarqube_ext/plugins/"
+                    sh "mv *.jar /pl_component_mounts/sonarqube/sonarqube_ext/plugins/"
+                }
+            }
+        }
+
+        stage('Restart SonarQube server'){
+            steps {
+                script {
+                    sonar.restartSonar()
+                }
+            }
+        }
+    }
+}

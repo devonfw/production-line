@@ -1,0 +1,290 @@
+@Library('ProductionLineTemplateLib')
+
+import com.capgemini.productionline.configuration.JenkinsConfiguration;
+import com.capgemini.productionline.configuration.Nexus;
+import com.capgemini.productionline.configuration.ProductionLineGlobals;
+import com.capgemini.productionline.configuration.SonarQube;
+import com.capgemini.productionline.configuration.GitLab;
+
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+SonarQube sonar = new SonarQube(this, 'admin');
+
+pipeline {
+    agent any
+
+    parameters {
+        credentials credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'svc-account-credentials', description: 'Credentials for Production Line service account', name: 'svcaccount', required: true
+        choice choices: ['None', 'Docker', 'Openshift', 'Docker+Openshift'], description: 'Install extra plugins related with the deployment method.', name: 'installDeploymentPlugins'
+    }
+
+
+    stages {
+        stage('Install plugins') {
+            steps {
+                script {
+                    def pluginsToInstall = ["http_request", "job-dsl", "pipeline-maven", "nodejs", "gitlab-plugin", "dependency-check-jenkins-plugin"]
+                    
+                    if (params.installDeploymentPlugins == 'Docker' || params.installDeploymentPlugins == 'Docker+Openshift') {
+                        pluginsToInstall << "docker-plugin" << "docker-build-step" << "docker-workflow" << "jclouds-jenkins"
+                    }
+
+                    if (params.installDeploymentPlugins == 'Openshift' || params.installDeploymentPlugins == 'Docker+Openshift') {
+                        pluginsToInstall << 'openshift-client'
+                    }
+
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(pluginsToInstall)
+                    if( pluginsHaveBeenInstalled ) {
+                        println "New plugins were installed - Restart"
+                        // We need to restart Jenkins in case new plugins have been installed.
+                        //if set to false, then do a force restart
+                        //still requires to manually start the job again afterwards
+                        jenkinsConfiguration.restartJenkins(false);
+                    } else {
+                        println "No plugins were installed"
+                    }
+                }
+            }
+        }
+
+        stage('Configure SonarQube') {
+            steps {
+                script {
+                    try {
+                        // Get new token
+                        def newToken = sonar.getAuthToken('jenkins');
+
+                        // Add new token as credential
+                        jenkinsConfiguration.createCredatialObjectSecretString('sonar-token', 'SonarQube API token for PL service account', newToken)
+                    } catch(e) {
+                        println "sonar-token already exists"
+                    }
+                    // Add SonarQube server
+                    try{
+                        jenkinsConfiguration.addSonarqubeServer('SonarQube', 'http://sonarqube-core:9000/sonarqube', 'sonar-token')
+                    } catch(e) {
+                        println "SonarQube server already configured"
+                    }
+                    // Add jenkins webhook
+                    try {
+                        sonar.addWebhook('jenkins','http%3A%2F%2Fjenkins-core%3A8080%2Fjenkins%2Fsonarqube-webhook%2F')
+                    } catch (e) {
+                        println "SonarQube webhook already added"
+                    }
+                    // Install sonarqube plugins
+                    try { 
+                        sonar.installPlugin('java')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('javascript')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('typescript')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('csharp')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('web')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('cssfamily')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('jacoco')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('groovy')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('checkstyle')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('cobertura')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('smells')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('findbugs')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('scmgit')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    try { 
+                        sonar.installPlugin('ansible')
+                    } catch (e) {
+                        println "Plugin already installed"
+                    }
+                    // install dependency check sonar plugin
+                    if (sonar.getSonarVersion() > '7.0') {
+                        sh "wget https://github.com/dependency-check/dependency-check-sonar-plugin/releases/download/1.2.6/sonar-dependency-check-plugin-1.2.6.jar"
+                        sh "mv sonar-dependency-check-plugin-1.2.6.jar /pl_component_mounts/sonarqube/sonarqube_ext/plugins/"
+                    } else {
+                        sh "wget https://github.com/dependency-check/dependency-check-sonar-plugin/releases/download/1.1.6/sonar-dependency-check-plugin-1.1.6.jar"
+                        sh "mv sonar-dependency-check-plugin-1.1.6.jar /pl_component_mounts/sonarqube/sonarqube_ext/plugins/"
+                    }
+
+                    // Restart SonarQube
+                    sonar.restartSonar()
+                }
+            }
+        }
+
+        stage('Create UTIL pipelines') {
+            steps {
+                script {
+                    //Disable Job Security
+                    println "Disable job dsl security"
+                    jenkinsConfiguration.disableJobDSLScriptSecurity()
+
+                    //Prepare folders in Jenkins for the jobs
+                    println "Trying to create folder for jobs"
+                    jobDsl scriptText: """
+                        folder("UTILS"){
+                            description('UTILS jobs.')
+                        }
+                        """
+
+                    //Build job
+                    // TODO: Change remote url
+                    println "Trying to create Build job"
+                    jobDsl scriptText: """
+                        pipelineJob("UTILS/Install_SonarQube_Plugin") {
+                            description('Install a plugin in the SonarQube')
+                            parameters {
+                                stringParam('plugin_download_url', '', 'Download URL for the plugin to install')
+                            }
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('https://github.com/dario-rodriguez/devon-production-line.git')
+                                            }
+                                            branches('feature/refactor_mts')
+                                            scriptPath('template-utils/install-sonar-plugin/Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+                    if (params.installDeploymentPlugins == 'Docker' || params.installDeploymentPlugins == 'Docker+Openshift') {
+                    
+                        println "Trying to create Build job"
+                        jobDsl scriptText: """
+                            pipelineJob("UTILS/Docker_Configuration") {
+                                description('Configure jenkins to deploy using Docker')
+                                parameters {
+                                    stringParam('NEW_DOCKER_HOST', 'tcp://127.0.0.1:2375', 'Remote docker url')
+                                }
+                                definition {
+                                    cpsScm {
+                                        scm {
+                                            git {
+                                                remote {
+                                                    url('https://github.com/dario-rodriguez/devon-production-line.git')
+                                                }
+                                                branches('feature/refactor_mts')
+                                                scriptPath('template-utils/docker-configuration/Jenkinsfile')
+                                                extensions { }  // required as otherwise it may try to tag the repo!
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            """
+                    }
+
+                    if (params.installDeploymentPlugins == 'Openshift' || params.installDeploymentPlugins == 'Docker+Openshift') {
+                        println "Trying to create Build job"
+                        jobDsl scriptText: """
+                            pipelineJob("UTILS/Openshift_Configuration") {
+                                description('Configure jenkins to deploy using Openshift')
+                                definition {
+                                    cpsScm {
+                                        scm {
+                                            git {
+                                                remote {
+                                                    url('https://github.com/dario-rodriguez/devon-production-line.git')
+                                                }
+                                                branches('feature/refactor_mts')
+                                                scriptPath('template-utils/openshift-configuration/Jenkinsfile')
+                                                extensions { }  // required as otherwise it may try to tag the repo!
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            """
+                    }
+                    
+                    //Enable Job Security again
+                    println "Enable job dsl security"
+                    jenkinsConfiguration.enableJobDSLScriptSecurity()
+                }
+            }
+        }
+
+        stage('Configure Nexus 3') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: params.svcaccount, passwordVariable: 'pass', usernameVariable: 'user')]) {
+                        def content = readFile file: './template-utils/initialize-instance/configure-nexus.json', encoding: 'utf8'
+                        try {
+                            httpRequest authentication: params.svcaccount, requestBody: content, contentType: 'APPLICATION_JSON', httpMode: 'POST', url: "${ProductionLineGlobals.NEXUS_BASR_URL}service/rest/v1/script"
+                        } catch(e) {
+                            println "Nexus3 script already exists"
+                        }
+
+                        try {
+                            def response = httpRequest authentication: params.svcaccount, requestBody: """{"username": "nexus-api", "password": "${pass}"}""", customHeaders: [[maskValue: true, name: 'Content-Type', value: 'text/plain']], httpMode: 'POST', url: "${ProductionLineGlobals.NEXUS_BASR_URL}service/rest/v1/script/configure_pl_nexus/run"
+                            def content = readJSON text: response.getContent()
+                            if (content.result.newUser){
+                                jenkinsConfiguration.createCredatialObjectUsernamePassword('nexus-api', 'Nexus internal admin user', 'nexus-api', pass)
+                            }
+                        } catch(e) {
+                            println "Nexus3 exists already executed"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Configure Maven File') {
+            steps {
+                script {
+                    jenkinsConfiguration.addServerCredentialToMavenConfig('MavenSettings','pl-nexus','nexus-api')
+                }
+            }
+        }
+    }
+}

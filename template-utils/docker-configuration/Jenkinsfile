@@ -1,0 +1,43 @@
+@Library('ProductionLineTemplateLib')
+
+import com.capgemini.productionline.configuration.JenkinsConfiguration;
+
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+
+pipeline {
+    agent any
+
+    parameters {
+        string defaultValue: 'tcp://127.0.0.1:2375', description: 'Remote docker url', name: 'NEW_DOCKER_HOST', trim: true
+    }
+
+    stages {
+        stage('Add docker custom tool') {
+            steps {
+                script {
+                    println "Trying to install docker as custom tool"
+                        
+                    jenkinsConfiguration.addCustomTool("docker-global", "", """if ! which docker > /dev/null; then
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
+    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian \$(lsb_release -cs) stable"
+    sudo apt-get update
+    sudo apt-get install -y docker-ce-cli
+    docker -v
+fi""", "/usr/bin")
+                }
+            }
+        }
+
+        stage('Configuring docker'){
+            steps {
+                script {
+                    if (!(env.DOCKER_HOST)){
+                        jenkinsConfiguration.addJenkinsGlobalEnvironmentVariable("DOCKER_HOST", params.NEW_DOCKER_HOST)
+                    }
+                }
+            }
+        }
+    }
+}
