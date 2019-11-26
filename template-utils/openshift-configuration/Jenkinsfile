@@ -1,0 +1,48 @@
+@Library('ProductionLineTemplateLib')
+
+import com.capgemini.productionline.configuration.JenkinsConfiguration;
+import com.capgemini.productionline.configuration.OpenshiftConfiguration;
+
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+OpenshiftConfiguration openshiftConfiguration = new OpenshiftConfiguration(this);
+
+pipeline {
+    agent any
+
+    parameters {
+        parameters {
+            string defaultValue: 'default', description: 'Openshift configuration name', name: 'ocName', trim: true
+            string defaultValue: 'https://ocp.itaas.s2-eu.capgemini.com', description: 'Openshift url', name: 'ocUrl', trim: true
+            string defaultValue: 's2portaldev', description: 'Openshift project', name: 'ocProject', trim: true
+            credentials credentialType: 'com.openshift.jenkins.plugins.OpenShiftTokenCredentials', description: 'The openshift auth token. You can get it with the command: oc whoami -t', name: 'ocToken', required: true
+        }
+    }
+
+    stages {
+        stage('Add Openshift tool') {
+            steps {
+                script {
+                    println "Trying to install Openshift tool"
+                    println "openshift"
+                        openshiftConfiguration.installOpenshift("OpenShiftv3.11.0", "", """
+if [ ! -f /opt/oc3.11.0/oc ]; then
+  echo "oc3.11.0 does not exist."
+  wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+  tar -xvzf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+  sudo mv openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit /opt/oc3.11.0
+else
+  echo "oc3.11.0 exist."
+fi
+""", "/opt/oc3.11.0")
+            }
+        }
+
+        stage('Configuring Openshift'){
+            steps {
+                script {
+                    jenkinsConfiguration.addOpenshiftGlobalConfiguration(params.ocName, params.ocUrl, params.ocToken, params.ocProject)
+                }
+            }
+        }
+    }
+}

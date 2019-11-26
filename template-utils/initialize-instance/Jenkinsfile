@@ -172,7 +172,6 @@ pipeline {
                         """
 
                     //Build job
-                    // TODO: Change remote url
                     println "Trying to create Build job"
                     jobDsl scriptText: """
                         pipelineJob("UTILS/Install_SonarQube_Plugin") {
@@ -185,9 +184,9 @@ pipeline {
                                     scm {
                                         git {
                                             remote {
-                                                url('https://github.com/dario-rodriguez/devon-production-line.git')
+                                                url('https://github.com/devonfw/production-line.git')
                                             }
-                                            branches('feature/refactor_mts')
+                                            branches('master')
                                             scriptPath('template-utils/install-sonar-plugin/Jenkinsfile')
                                             extensions { }  // required as otherwise it may try to tag the repo!
                                         }
@@ -211,9 +210,9 @@ pipeline {
                                         scm {
                                             git {
                                                 remote {
-                                                    url('https://github.com/dario-rodriguez/devon-production-line.git')
+                                                    url('https://github.com/devonfw/production-line.git')
                                                 }
-                                                branches('feature/refactor_mts')
+                                                branches('master')
                                                 scriptPath('template-utils/docker-configuration/Jenkinsfile')
                                                 extensions { }  // required as otherwise it may try to tag the repo!
                                             }
@@ -234,9 +233,9 @@ pipeline {
                                         scm {
                                             git {
                                                 remote {
-                                                    url('https://github.com/dario-rodriguez/devon-production-line.git')
+                                                    url('https://github.com/devonfw/production-line.git')
                                                 }
-                                                branches('feature/refactor_mts')
+                                                branches('master')
                                                 scriptPath('template-utils/openshift-configuration/Jenkinsfile')
                                                 extensions { }  // required as otherwise it may try to tag the repo!
                                             }
