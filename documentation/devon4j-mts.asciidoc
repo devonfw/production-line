@@ -1,10 +1,21 @@
-= Devon4J My-Thai-Star Sample Application Template for Production Line
 :toc: macro
 
-image::doc/images/devonfw.png[DevonFW Logo]
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
 
 toc::[]
+:idprefix:
+:idseparator: -
+:reproducible:
+:source-highlighter: rouge
+:listing-caption: Listing
 
+= Devon4J My-Thai-Star Sample Application Template for Production Line
 
 == Introduction
 
@@ -94,19 +105,19 @@ The creation of the GitLab Group and Project will require a private GitLab token
 
 1. Go to your Profile in Gitlab
 
-image::./doc/images/profile.png[500,400]
+image::./images/devon4j-mts/profile.png[500,400]
 
 2. Next click on the pen icon
 
-image::./doc/images/pen.png[500,400]
+image::./images/devon4j-mts/pen.png[500,400]
 
 3. On the left menu choose Access Tokens and put token name and check fields like below +
 
-image::./doc/images/token.JPG[600,500]
+image::./images/devon4j-mts/token.JPG[600,500]
 
 4. Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
 
-image::./doc/images/created_token.JPG[600,500]
+image::./images/devon4j-mts/created_token.JPG[600,500]
 
 
 
@@ -129,11 +140,11 @@ Nexus3 is used to store build artifacts such as the frontend and the backend. In
 
 1. The nexus3-api user should be created in section Administration
 
-image::./doc/images/nexusadmin.png[600,500]
+image::./images/devon4j-mts/nexusadmin.png[600,500]
 
 2. New user should have added roles: Admins, nx-admins
 
-image::./doc/images/nexususer.png[600,500]
+image::./images/devon4j-mts/nexususer.png[600,500]
 
 
 =====  Add it as credential in Jenkins
@@ -141,18 +152,18 @@ image::./doc/images/nexususer.png[600,500]
 Credentials 'nexus-api' user should be added to Jenkins
 Jenkins -> Credentials -> System -> Global credentials (unrestricted) -> Add Credentials
 
-image::./doc/images/credential.png[800,500]
+image::./images/devon4j-mts/credential.png[800,500]
 
 
 =====  Add the user to maven global settings in Jenkins:
 
 1. Jenkins -> Settings -> Managed Files -> Edit Global Maven Settings XML
 
-image::./doc/images/mavensettings.PNG[600,500]
+image::./images/devon4j-mts/mavensettings.PNG[600,500]
 
 2.  Add the credential to the settings xml, use the ID "pl-nexus"
 
-image::./doc/images/mavensettings2.PNG[600,500]
+image::./images/devon4j-mts/mavensettings2.PNG[600,500]
 
 ==== Jenkins Preparation
 
@@ -161,7 +172,7 @@ HTTP Request Plugin +
 Allure Jenkins Plugin +
 ** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
 
-image::./doc/images/allure.JPG[500,400]
+image::./images/devon4j-mts/allure.JPG[500,400]
 
 ==== SonarQube scanner configuration in Jenkins
 The following steps must be configured in Jenkins to integrate SonarQube with Jenkins.
@@ -182,7 +193,7 @@ Jenkins must be configured to have default SonarQube scanner installation.
 ** Download-Url: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.2.0.1227-linux.zip
 ** Subdir: sonar-scanner-3.2.0.1227-linux/
 
-image::./doc/images/jenkinsonarscanner.PNG[]
+image::./images/devon4j-mts/jenkinsonarscanner.PNG[]
 
 ===== Sonarqube Server configuration in Jenkins
 
@@ -192,7 +203,7 @@ Go to Jenkins -> Settings -> Configuration -> SonarQube Servers
 
 Add the following data
 
-image::./doc/images/sonarjenkins.PNG[600,500]
+image::./images/devon4j-mts/sonarjenkins.PNG[600,500]
 
 ==== Technical SonarQube user and settings
 
@@ -201,7 +212,7 @@ image::./doc/images/sonarjenkins.PNG[600,500]
 * Go to SonarQube.
 * Go to your account.
 
-image::./doc/images/sonaraccount.PNG[600,500]
+image::./images/devon4j-mts/sonaraccount.PNG[600,500]
 * Go to Security tab.
 * Generate the token.
 
@@ -215,7 +226,7 @@ A part of the Build Job will ask SonarQube if the quality gate has been passed. 
 . Select 'Configuration', 'General Settings' and select 'Webhooks' in the left menu
 . Add the following webhook
 
-image::./doc/images/SonarqubeWebhook.png[float="right"]
+image::./images/devon4j-mts/SonarqubeWebhook.png[float="right"]
 
 . Press 'Save'
 
@@ -262,7 +273,7 @@ If a restart was needed, you need to trigger the job again!
 
 * The job should now show the required parameters, you only need to change the GITLAB PRIVATE TOKEN that you should have generated in the prerequisite section
 
-image::./doc/images/job.PNG[600,500]
+image::./images/devon4j-mts/job.PNG[600,500]
 
 When everything is "green" the template is done and you can have a look in the created "MTS" folder in Jenkins.
 
@@ -280,7 +291,7 @@ You can now execute the build for the frontend and also the backend. They do not
 All deployment jobs have several parameters configured in their Jenkinsfile. Unfortunately, Jenkins does not pick them up immediatly, *so you need to execute the job once, by pressing the "Build now" button.* 
 The run should fail quite fast and once you refresh the page, the "Build now" button should have changed to "Build with Parameters". If you now click on the button you should see the parameters below:
 
-image::./doc/images/JenkinsDeployParameters.png[Jenkins Deployment Parameters]
+image::./images/devon4j-mts/JenkinsDeployParameters.png[Jenkins Deployment Parameters]
 
 You need to set the following parameters in order to get it running:
 

@@ -1,8 +1,24 @@
-= Devon4j Template for Production Line
 :toc: macro
 
-image::images/pl.png[400,300]
-image::images/devonfw.png[400,300]
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+toc::[]
+:idprefix:
+:idseparator: -
+:reproducible:
+:source-highlighter: rouge
+:listing-caption: Listing
+
+image::images/devon4j-pl/pl.png[400,300]
+image::images/devon4j-pl/devonfw.png[400,300]
+
+= Devon4j Template for Production Line
 
 === Overview
 
@@ -27,26 +43,26 @@ NodeJS Plugin +
 Jobs DSL Plugin
 ** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
 
-image::./images/allure.JPG[500,400]
-image::./images/maven.JPG[500,400]
+image::./images/devon4j-pl/allure.JPG[500,400]
+image::./images/devon4j-pl/maven.JPG[500,400]
 
 * Gitlab +
 ** Generate User Private Token +
 Go to your Profile in Gitlab +
 
-image::./images/profile.png[500,400]
+image::./images/devon4j-pl/profile.png[500,400]
 
 Next click on the pen icon +
 
-image::./images/pen.png[500,400]
+image::./images/devon4j-pl/pen.png[500,400]
 
 On the left menu choose Access Tokens and put token name and check fields like below +
 
-image::./images/token.JPG[600,500]
+image::./images/devon4j-pl/token.JPG[600,500]
 
 Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
 
-image::./images/created_token.JPG[800,700]
+image::./images/devon4j-pl/created_token.JPG[800,700]
 
 The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps: +
 
@@ -72,7 +88,7 @@ Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure
 
 * devon4j-pl/Jenkinsfile
 
-image::./images/devon4j.JPG[800,700]
+image::./images/devon4j-pl/devon4j.JPG[800,700]
 
 * Save job configuration
 

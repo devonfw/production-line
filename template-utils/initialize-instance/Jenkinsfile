@@ -22,7 +22,7 @@ pipeline {
         stage('Install plugins') {
             steps {
                 script {
-                    def pluginsToInstall = ["http_request", "job-dsl", "pipeline-maven", "nodejs", "gitlab-plugin", "dependency-check-jenkins-plugin"]
+                    def pluginsToInstall = ["ssh-credentials", "custom-tools-plugin", "http_request", "job-dsl", "sonar", "ansible", "pipeline-maven", "nodejs", "gitlab-plugin", "dependency-check-jenkins-plugin"]
                     
                     if (params.installDeploymentPlugins == 'Docker' || params.installDeploymentPlugins == 'Docker+Openshift') {
                         pluginsToInstall << "docker-plugin" << "docker-build-step" << "docker-workflow" << "jclouds-jenkins"
