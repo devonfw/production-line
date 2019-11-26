@@ -228,6 +228,17 @@ pipeline {
                         jobDsl scriptText: """
                             pipelineJob("UTILS/Openshift_Configuration") {
                                 description('Configure jenkins to deploy using Openshift')
+                                parameters {
+                                    stringParam('ocName', 'default', 'Openshift configuration name')
+                                    stringParam('ocUrl', 'https://ocp.itaas.s2-eu.capgemini.com', 'Openshift url')
+                                    stringParam('ocProject', 's2portaldev', 'Openshift project')
+                                    credentialsParam('ocToken') {
+                                        type('com.openshift.jenkins.plugins.OpenShiftTokenCredentials')
+                                        required()
+                                        defaultValue('')
+                                        description('The openshift auth token. You can get it with the command: oc whoami -t')
+                                    }
+                                }
                                 definition {
                                     cpsScm {
                                         scm {

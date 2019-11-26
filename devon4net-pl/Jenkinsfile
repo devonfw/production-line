@@ -1,0 +1,185 @@
+@Library('ProductionLineTemplateLib')
+
+import com.capgemini.productionline.configuration.JenkinsConfiguration;
+import com.capgemini.productionline.configuration.GitLab;
+import com.capgemini.productionline.configuration.ProductionLineGlobals;
+
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN, ProductionLineGlobals.GITLAB_BASE_URL);
+
+pipeline{
+
+    agent any
+
+    //Jenkins Job Parameters
+    parameters { 
+        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: '', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
+        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'devon4net', description: 'Name of the repository inside GitLab that will be created.') 
+        string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Branch') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'Devon for dotnet PL template', description: 'Description of the repository.') 
+    }
+    
+    stages {
+        stage('PL setup') {
+            steps{
+                cleanWs()
+                script{
+                    println "Trying to install all required plugins"
+                    //Install the required Jenkins plugins
+                    //The template currently requires the following plugins to be present
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl"])
+                    
+                    if( pluginsHaveBeenInstalled ) {
+                        println "New plugins were installed - Restart"
+                        // We need to restart Jenkins in case new plugins have been installed.
+                        //if set to false, then do a force restart
+                        //still requires to manually start the job again afterwards
+                        jenkinsConfiguration.restartJenkins(false);
+                    } else {
+                        println "No plugins were installed"
+                    }
+
+                    jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
+                }
+            }
+        }
+        
+        stage('Create Devon4net repo') {
+            steps{
+                script{
+                    
+                    println "Trying to create gitlab group"
+                    //Check if group already exists
+                    if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
+                        println "No group existing yet, trying to create"
+                        //Create a group for devon
+                        // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
+                        gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
+                    } else {
+                        println "Group already exists"
+                    }
+
+                    //Check if project already exists
+                    println "Trying co create Gitlab project"
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
+                        println "No project with the same name exists yet, trying to create"
+                        //Create a new public repository for Devon4ng in the Production Line
+                        gitlabConfiguration.createProject(
+                            params.GITLAB_CREATE_GROUP_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
+                            params.GITLAB_CREATE_BRANCH, 
+                            '',
+                            "public"
+                        )
+                    } else {
+                        println "Project with the same name already exists"
+                    }
+                }
+            }
+        }
+
+        stage('Generate dotnet template job'){
+            steps{
+                println "Trying to create Jenkins jobs"
+                script{
+                    //Disable Job Security
+                    println "Disable job dsl security"
+                    jenkinsConfiguration.disableJobDSLScriptSecurity()
+
+                    //Prepare folders in Jenkins for the jobs
+                    println "Trying to create folder for jobs"
+                    jobDsl scriptText: """
+                        folder("dotnet"){
+                            description('Jobs generated by the Devon4j Template.')
+                        }
+                        """
+
+                    //Build job
+                    println "Trying to create Build job"
+                    jobDsl scriptText: """
+                        pipelineJob("dotnet/Devon4net_build_template") {
+                            description('Build job for devon4j template.')
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        git {
+                                            remote {
+                                                url('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git')
+                                            }
+                                            branches('master')
+                                            scriptPath('Jenkinsfile')
+                                            extensions { }  // required as otherwise it may try to tag the repo!
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        """
+
+                    //Enable Job Security again
+                    println "Enable job dsl security"
+                    jenkinsConfiguration.enableJobDSLScriptSecurity()
+                }
+            }
+        }
+        
+        stage('Install dotnet custom tool') {
+            steps{
+                script {
+                    jenkinsConfiguration.addCustomTool('dotnet', '', """if ! which dotnet > /dev/null; then
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
+sudo mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+wget -q https://packages.microsoft.com/config/debian/10/prod.list
+sudo mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+sudo chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+sudo chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+sudo apt-get update
+sudo apt-get install -y apt-transport-https
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-3.0
+fi""", '/usr/bin')
+                }
+            }
+        }
+
+        stage('Generate dotnet project') {
+            steps{
+                script {
+                    tool 'dotnet'
+                    sh "mkdir devon4net"
+                    dir('devon4net'){
+                        sh "dotnet new --install Devon4Net.WebAPI.Template"
+                        sh "dotnet new Devon4NetAPI"
+                    }
+                }
+            }
+        }
+        
+        stage('Create cicdgen dotnet template') {
+            steps{
+                // script{
+                //     PL_NAME = sh(returnStdout: true, script: "curl -v -H 'Content-Type: application/json' -H 'Authorization: $MICROPORTAL_TOKEN' 'http://microportal:8080/api/metadata' | jq -r '.engagementname'")   
+                //     PL_NAME = PL_NAME.trim()   
+                // }
+                // sh "cd ${PACKAGE_NAME} && cicdgen generate devon4j --docker --plurl \""+PL_NAME+".dev.s2-eu.capgemini.com\""
+                println "cicdgen for devon4net not ready yet."
+            }
+        }
+        
+        stage('Pushing template to Gitlab') {
+            steps{
+                sh 'git config --global user.email "jenkins@example.com" && git config --global user.name "Jenkins"'
+                sh 'cd devon4net && git init && git remote add origin http://jenkins@gitlab-core:80/gitlab/${GITLAB_CREATE_GROUP_NAME}/${GITLAB_CREATE_PROJECT_NAME}.git && git add * && git commit -m "initial commit" && git push origin master'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
