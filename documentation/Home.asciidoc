@@ -51,6 +51,10 @@ image::./images/pipelinesettings.PNG[]
 - link:docker-configuration.asciidoc[Docker Configuration Template]
 - link:openshift-configuration.asciidoc[OpenShift Configuration Example]
 
+== MrChecker
+
+- link:mrchecker.asciidoc[MrChecker Template]
+
 == Samples
 
 - link:devon4j-mts.asciidoc[My Thai Star sample]

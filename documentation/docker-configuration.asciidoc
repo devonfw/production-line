@@ -15,3 +15,50 @@ toc::[]
 :source-highlighter: rouge
 :listing-caption: Listing
 
+= Docker Configuration
+
+== Introduction
+
+Docker is the most popular container technology. It allows you to build your application in an link:https://docs.docker.com/v17.09/engine/userguide/storagedriver/imagesandcontainers/#images-and-layers[image] and then deploy it into a link:https://docs.docker.com/v17.09/engine/userguide/storagedriver/imagesandcontainers/#container-and-layers[container]. 
+
+=== Overview
+
+This template allow you to configure Jenkins in order to work with docker.
+
+It will:
+
+* Add docker client as custom tool.
+* Configure docker to work with an external docker dameon.
+
+== Pipeline
+
+This pipeline will be automatically created in your jenkins after executing the `Initialize_Instance` template inside the `UTILS` folder with the name `Docker_Configuration`.
+
+NOTE: This pipeline needs the link:https://github.com/devonfw/production-line-shared-lib[devonfw Production Line Shared Lib]
+
+=== Parameters
+
+The only parameter required is remote docker daemon URL. Example: tcp://127.0.0.1:2367
+
+NOTE: You need to expose the docker daemon manually in your machine. Here you can find link:https://success.docker.com/article/how-do-i-enable-the-remote-api-for-dockerd[how to do it]
+
+NOTE: With this configuration requires that the docker daemon has no security. It's prepared for development environments, for production environments please add link:https://docs.docker.com/engine/security/https/[security] to your docker daemon.
+
+=== Execution
+
+. Press the Build with Parameters button
+. Insert remote docker daemon URL.
+. Press the `Build` button.
+. Wait until the pipeline ends.
+
+image::images/docker-configuration/docker-configuration.png[]
+image::images/docker-configuration/docker-configuration2.png[]
+
+Then, you can see that the docker is configured and the remote docker daemon environment variable is set:
+
+image::images/docker-configuration/docker-env-var.png[]
+image::images/docker-configuration/docker-custom-tool.png[]
+
+The environment variable is setted globally, if you want to use another remote docker daemon for a specific build, you can override the `DOCKER_HOST` environment variable in your job.
+
+If the `DOCKER_HOST` is already setted globally, when you execute again this pipeline the value will not be changed. You need to change the value manually at: Jenkins -> Manage Jenkins -> Configure System -> Global properties

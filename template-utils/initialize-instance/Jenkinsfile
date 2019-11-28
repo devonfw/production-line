@@ -38,6 +38,7 @@ pipeline {
                         //if set to false, then do a force restart
                         //still requires to manually start the job again afterwards
                         jenkinsConfiguration.restartJenkins(false);
+                        error "Restarting Jenkins, please execute pipeline after restart"
                     } else {
                         println "No plugins were installed"
                     }
@@ -57,6 +58,7 @@ pipeline {
                     } catch(e) {
                         println "sonar-token already exists"
                     }
+
                     // Add SonarQube server
                     try{
                         jenkinsConfiguration.addSonarqubeServer('SonarQube', 'http://sonarqube-core:9000/sonarqube', 'sonar-token')
@@ -70,75 +72,14 @@ pipeline {
                         println "SonarQube webhook already added"
                     }
                     // Install sonarqube plugins
-                    try { 
-                        sonar.installPlugin('java')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('javascript')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('typescript')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('csharp')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('web')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('cssfamily')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('jacoco')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('groovy')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('checkstyle')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('cobertura')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('smells')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('findbugs')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('scmgit')
-                    } catch (e) {
-                        println "Plugin already installed"
-                    }
-                    try { 
-                        sonar.installPlugin('ansible')
-                    } catch (e) {
-                        println "Plugin already installed"
+                    def sonarPlugins = ['java', 'javascript', 'typescript', 'csharp', 'web', 'cssfamily', 'jacoco', 'checkstyle', 'cobertura', 'smells', 'findbugs', 'scmgit', 'ansible']
+
+                    sonarPlugins.each {
+                        try { 
+                            sonar.installPlugin(it)
+                        } catch (e) {
+                            println "Plugin ${it} already installed"
+                        }
                     }
 
                     sh "mkdir -p /pl_component_mounts/sonarqube/sonarqube_ext/plugins"

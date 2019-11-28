@@ -15,7 +15,7 @@ toc::[]
 :source-highlighter: rouge
 :listing-caption: Listing
 
-= Devon4J My-Thai-Star Sample Application Template for Production Line
+= devon4j My-Thai-Star Sample Application Template for Production Line
 
 == Introduction
 
@@ -23,19 +23,19 @@ Please read all of the following sections carefully.
 
 === Overview
 
-This template will configure your PL instance to have a 'ready to use' My-Thai-Star Devon application. It can be used as a starting point for your projects. This includes:
+This template will configure your PL instance to have a 'ready to use' My-Thai-Star devonfw application. It is only an example. In order to start a new project, please use the other templates. This includes:
 
 * Cloning the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository into your GitLab, which allows you to do customizations on your own.
 
-* Adding a build job for the Angular front-end, including a SonarQube analysis and a deployment to Nexus.
+* Adding a build job for the Angular front-end, including a SonarQube analysis and a delivery to Nexus as zip and docker image.
 
-* Adding a build job for the Java back-end, including a SonarQube analysis and a deployment to Nexus.
+* Adding a build job for the Java back-end, including a SonarQube analysis and a deployment to Nexus as zip and docker image.
 
 * Adding a deployment job for the Angular front-end
 
 * Adding a deployment job for the Java back-end
 
-* Adding a 'full-deployment' job that triggers the deployment of both components
+* Adding a deployment job for the reverse proxy. Please see link:https://devonfw.com/website/pages/docs/master-my-thai-star.asciidoc_cicd.html#deployment.asciidoc[My Thai Star deployment documentation]
 
 Especially the build and delpoyment jobs require several additional Jenkins plugins, which are not part of the PL by default. The Template will also take care of those installations.
 
@@ -49,30 +49,22 @@ All build and deployment jobs are taken from the official `My-Thai-Star` (https:
 | Jenkins job name | Path to Jenkinsfile in repo | Description 
 | MyThaiStar_FRONTEND_BUILD | jenkins/angular/cicd/Jenkinsfile | Builds and tests the Angular frontend. Pushes artifacts to Nexus.
 | MyThaiStar_SERVER_BUILD | jenkins/java/cicd/Jenkinsfile | Builds and tests the Java backend. Pushes artifacts to Nexus.
-| MyThaiStar_FRONTEND_DEPLOY |  jenkins/angular/deployment/Jenkinsfile | Frontend deployment job. Downloads the artifact from Nexus3, pushes it to the server via SSH then builds a docker image on the deployment server and starts the container.
-| MyThaiStar_SERVER_DEPLOY |  jenkins/java/deployment/Jenkinsfile | Backend deployment job. Downloads the artifact from Nexus3, pushes it to the server via SSH then builds a docker image on the deployment server and starts the container.
-| MyThaiStar_DEPLOY-Together | jenkins/deployment/Jenkinsfile | Setups the deployment server. Then starts Frontend deploy job and after that the server deploy job.
+| MyThaiStar_FRONTEND_DEPLOY |  jenkins/angular/deployment/Jenkinsfile | Frontend deployment job. Downloads the docker images from Nexus3 and starts a new container usign that image.
+| MyThaiStar_SERVER_DEPLOY |  jenkins/java/deployment/Jenkinsfile | Backend deployment job. Downloads the docker images from Nexus3 and starts a new container usign that image.
+| MyThaiStar_REVERSE-PROXY_DEPLOY | jenkins/deployment/Jenkinsfile | Reverse proxy deployment job. Downloads the docker images from Nexus3 and starts a new container usign that image. With this job you can also build the reverse proxy image.
 |====================
 
 
 == How to report Issues
 
-This template is independent from PL and devon releases and is also not really connected to one of the projects. Therefore issues that occur during the template setup or execution should be tracked in the issue section of this GitHub project. 
+This template is independent from PL and devonfw releases and is also not really connected to one of the projects. Therefore issues that occur during the template setup or execution should be tracked in the issue section of this GitHub project. 
 
 == How to contribute
 
 In case you see improvements we would love to see a Pull Request.
 
-
-
 == Prerequisities before running the template
 
-[WARNING]
-====
-Right now you need add the PL Jenkins SharedLib manually with the name "ProductionLineTemplateLib" in Jenkins https://github.com/devonfw-forge/devon-production-line-shared-lib.git. Go to the repository for a step-by-step guide.
-====
-
- 
 === Production Line Components
 
 *To use the template you need to make sure that your PL has the following components installed:*
@@ -80,8 +72,7 @@ Right now you need add the PL Jenkins SharedLib manually with the name "Producti
 * Jenkins (required to run the template and to execute the build/deployment Jobs)
 * SonarQube (required for a static code analysis)
 * GitLab (required as a repostiory)
-* Nexus (required to store the build artifacts)
-
+* Nexus3 (required to store the build artifacts)
 
 [TIP]
 ====
