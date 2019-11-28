@@ -4,7 +4,6 @@ import com.capgemini.productionline.configuration.JenkinsConfiguration;
 import com.capgemini.productionline.configuration.Nexus;
 import com.capgemini.productionline.configuration.ProductionLineGlobals;
 import com.capgemini.productionline.configuration.SonarQube;
-import com.capgemini.productionline.configuration.GitLab;
 
 JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
 SonarQube sonar = new SonarQube(this, 'admin');
@@ -141,6 +140,9 @@ pipeline {
                     } catch (e) {
                         println "Plugin already installed"
                     }
+
+                    sh "mkdir -p /pl_component_mounts/sonarqube/sonarqube_ext/plugins"
+
                     // install dependency check sonar plugin
                     if (sonar.getSonarVersion() > '7.0') {
                         sh "wget https://github.com/dependency-check/dependency-check-sonar-plugin/releases/download/1.2.6/sonar-dependency-check-plugin-1.2.6.jar"
@@ -277,8 +279,9 @@ pipeline {
 
                         try {
                             def response = httpRequest authentication: params.svcaccount, requestBody: """{"username": "nexus-api", "password": "${pass}"}""", customHeaders: [[maskValue: true, name: 'Content-Type', value: 'text/plain']], httpMode: 'POST', url: "${ProductionLineGlobals.NEXUS_BASR_URL}service/rest/v1/script/configure_pl_nexus/run"
-                            def content = readJSON text: response.getContent()
-                            if (content.result.newUser){
+                            def responseContent = readJSON text: response.getContent()
+                            def result = readJSON text: responseContent.result
+                            if (result.newUser){
                                 jenkinsConfiguration.createCredatialObjectUsernamePassword('nexus-api', 'Nexus internal admin user', 'nexus-api', pass)
                             }
                         } catch(e) {
