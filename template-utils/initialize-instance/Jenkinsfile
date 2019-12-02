@@ -99,7 +99,7 @@ pipeline {
             }
         }
 
-        stage('Create UTIL pipelines') {
+        stage('Create UTIL templates') {
             steps {
                 script {
                     //Disable Job Security

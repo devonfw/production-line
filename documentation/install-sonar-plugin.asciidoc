@@ -23,7 +23,7 @@ SonarQube can extends its behaviour by adding plugins. Some on them can be insta
 
 === Overview
 
-This pipeline will help you to install SonarQube plugins by copying the .jar into the SonarQube plugins folder. As you do not have access to the Production Line volumes, it will help you when you want to install a plugin that is not installed in the SonarQube Marketplace.
+This template will help you to install SonarQube plugins by copying the .jar into the SonarQube plugins folder. As you do not have access to the Production Line volumes, it will help you when you want to install a plugin that is not installed in the SonarQube Marketplace.
 
 It will:
 
@@ -31,13 +31,15 @@ It will:
 * Copy the .jar file to the plugins folder.
 * Restart the SonarQube server in order to enable the plugin.
 
-NOTE: this pipeline only works in a Production Line instance.
+NOTE: this template only works in a Production Line instance.
 
-== Pipeline
+== Template
 
-This pipeline will be automatically created in your jenkins after executing the `Initialize_Instance` template inside the `UTILS` folder with the name `Install_SonarQube_Plugin`.
+This template will be automatically created in your jenkins after executing the `Initialize_Instance` template inside the `UTILS` folder with the name `Install_SonarQube_Plugin`.
 
-NOTE: This pipeline needs the link:https://github.com/devonfw/production-line-shared-lib[devonfw Production Line Shared Lib]
+For manual creation see: link:how-to-add-a-template.asciidoc[How to add a Template]
+
+IMPORTANT: This template needs the link:https://github.com/devonfw/production-line-shared-lib[devonfw Production Line Shared Lib]
 
 === Parameters
 

@@ -16,10 +16,10 @@ pipeline {
     //Jenkins Job Parameters
     parameters { 
         credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'GITLAB_USER_PRIVATE_TOKEN', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
-        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'GitLab group name where the repository will be created.') 
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'GitLab group name where the repository will be created.') 
         string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'GitLab repository name where My Thai Star will be cloned to.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'GitLab repository default branch name.') 
-        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample Devon4J application', description: 'GitLab repository description.') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample devon4j application', description: 'GitLab repository description.') 
         string(name: 'GITLAB_CLONE_URL', defaultValue: 'https://github.com/devonfw/my-thai-star.git', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'JENKINS_FOLDER', defaultValue: 'MTS', description: 'Folder where all pipelines will be created.') 
         string(name: 'NEW_DOCKER_HOST', defaultValue: 'tcp://127.0.0.1:2375', description: 'Remote docker url', trim: true)
@@ -41,7 +41,8 @@ pipeline {
                         // We need to restart Jenkins in case new plugins have been installed.
                         //if set to false, then do a force restart
                         //still requires to manually start the job again afterwards
-                        jenkinsConfiguration.restartJenkins(false);
+                        jenkinsConfiguration.restartJenkins(false)
+                        error "Restarting Jenkins, please execute pipeline after restart"
                     } else {
                         println "No plugins were installed"
                     }
@@ -91,7 +92,7 @@ pipeline {
                     //Check if group already exists
                     if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
                         println "No group existing yet, trying to create"
-                        //Create a group for devon
+                        //Create a group for devonfw
                         // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
                         gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
                     } else {
@@ -139,7 +140,7 @@ pipeline {
                     println "Trying to create Build job"
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_FRONTEND_BUILD") {
-                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            description('Build job for MyThaiStar sample devonfw application. Frontend component.')
                             definition {
                                 cpsScm {
                                     scm {
@@ -162,7 +163,7 @@ pipeline {
                     println "Trying to create Build job"
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_SERVER_BUILD") {
-                            description('Build job for MyThaiStar sample devon application. Server component.')
+                            description('Build job for MyThaiStar sample devonfw application. Server component.')
                             definition {
                                 cpsScm {
                                     scm {

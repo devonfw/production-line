@@ -15,7 +15,7 @@ image::./images/newjenkinsjob.PNG[]
 
 ** Switch to "Pipeline script from SCM".
 ** Set "SCM" to "Git".
-** Set "Repository URL" to: https://github.com/devonfw-forge/devon-production-line.git
+** Set "Repository URL" to: https://github.com/devonfw/production-line.git
 ** Credentials can be left empty, because the repository is public.
 ** Set "Script Path" to the template that you want to use e.g. "devon4j-mts/Jenkinsfile".
 
@@ -41,3 +41,7 @@ include::mrchecker.asciidoc[leveloffset=2]
 == Samples
 
 include::devon4j-mts[leveloffset=2]
+
+== Troubleshooting
+
+include::troubleshoot[leveloffset=2]

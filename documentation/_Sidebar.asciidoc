@@ -12,3 +12,4 @@
 *** link:mrchecker.asciidoc[MrChecker Template]
 ** Samples
 *** link:devon4j-mts.asciidoc[My Thai Star sample]
+** link:troubleshooting.asciidoc[Troubleshooting]

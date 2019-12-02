@@ -21,7 +21,7 @@ image::./images/mrchecker/pl.png[500,400]
 
 == Introduction
 MrChecker is end to end automation test framework written in Java. It has been released
-by Devon team which also is responsible for support of this framework. +
+by devonfw but it is not supported by the devonfw core team. +
 
 This framework consist of eight test modules:
 
@@ -37,7 +37,7 @@ This framework consist of eight test modules:
 To be able to run Jenkins MrChecker job under ProductionLine you need to configure below settings in Jenkins and Gitlab
 
 * Jenkins +
-** Add Jenkins Shared Library using documentation https://github.com/devonfw-forge/devon-production-line-shared-lib
+** Add Jenkins Shared Library using documentation https://github.com/devonfw/production-line-shared-lib
 ** Install required plugins: +
 HTTP Request Plugin +
 Allure Jenkins Plugin +
@@ -80,7 +80,7 @@ Name: GITLAB_USER_PRIVATE_TOKEN +
 Default Value: <GITLAB_TOKEN_STRING_YOU_JUST_CREATED>
 
 * Add the template +
-The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw-forge/devon-production-line.git
+The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw/production-line.git
 * Save job configuration
 
 == How to run the Template

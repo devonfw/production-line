@@ -89,10 +89,17 @@ In order to configure the services, we need technical users for the following co
 
 *The following sections describe how to configure the components to enable technical users and tokens.*
 
-==== Technical Gitlab User and settings
+==== Manual configuration
+
+In order to configure the Production Line components manually you can follow link:initialize-instance-manually.asciidoc[this guide]
+
+==== Automatic configuration
+
+In order to configure the Production Line components automatically you can follow link:initialize-instance.asciidoc[this guide]
+
+There is one thing that `initialize-template` can not do automatically: the gitlab token creation.
 
 The creation of the GitLab Group and Project will require a private GitLab token which has to be created manually. The token can be obtained like this:
-
 
 1. Go to your Profile in Gitlab
 
@@ -110,8 +117,6 @@ image::./images/devon4j-mts/token.JPG[600,500]
 
 image::./images/devon4j-mts/created_token.JPG[600,500]
 
-
-
 [IMPORTANT]
 ====
 The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps:
@@ -122,115 +127,12 @@ The GitLab API user needs to have API access and the rights to create a new grou
 3. Select the user(s) in question and click 'Edit'
 4. Scroll down to 'Access' and un-tick 'Can Create Group'
 
+=== Build/Deployment Requirements
 
-==== Technical Nexus3 user and settings
+The My Thai Star CICD pipelines will create a docker image and then the deployment pipelines will use it in order to deploy the application. As Production Line do not include a docker daemon, you need an additional server to do it. Those server needs:
 
-Nexus3 is used to store build artifacts such as the frontend and the backend. In the future it might also be used to store docker images of MTS.
-
-===== Create the technical Nexus User
-
-1. The nexus3-api user should be created in section Administration
-
-image::./images/devon4j-mts/nexusadmin.png[600,500]
-
-2. New user should have added roles: Admins, nx-admins
-
-image::./images/devon4j-mts/nexususer.png[600,500]
-
-
-=====  Add it as credential in Jenkins
-
-Credentials 'nexus-api' user should be added to Jenkins
-Jenkins -> Credentials -> System -> Global credentials (unrestricted) -> Add Credentials
-
-image::./images/devon4j-mts/credential.png[800,500]
-
-
-=====  Add the user to maven global settings in Jenkins:
-
-1. Jenkins -> Settings -> Managed Files -> Edit Global Maven Settings XML
-
-image::./images/devon4j-mts/mavensettings.PNG[600,500]
-
-2.  Add the credential to the settings xml, use the ID "pl-nexus"
-
-image::./images/devon4j-mts/mavensettings2.PNG[600,500]
-
-==== Jenkins Preparation
-
-** Install required plugins: +
-HTTP Request Plugin +
-Allure Jenkins Plugin +
-** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
-
-image::./images/devon4j-mts/allure.JPG[500,400]
-
-==== SonarQube scanner configuration in Jenkins
-The following steps must be configured in Jenkins to integrate SonarQube with Jenkins.
-
-[NOTE]
-====
-* TODO Either automate this step in Jenkins (create sonarqube scanner settings as custom tool) or change the way of running sonarqube in the respective MTS build job to maven.
-====
-
-Jenkins must be configured to have default SonarQube scanner installation.
-
-* Go to Jenkins.
-* Go to Manage Jenkins clicking on left menu.
-* Go to "Global Tool Configuration".
-* Go to the "SonarQube Scanner" section.
-* Add a new Sonarqube scanner with  
-** name: SonarQube
-** Download-Url: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.2.0.1227-linux.zip
-** Subdir: sonar-scanner-3.2.0.1227-linux/
-
-image::./images/devon4j-mts/jenkinsonarscanner.PNG[]
-
-===== Sonarqube Server configuration in Jenkins
-
-SonarQube must be configured in Jenkins, so that we can easily use the SonarQube server in our builds.
-
-Go to Jenkins -> Settings -> Configuration -> SonarQube Servers
-
-Add the following data
-
-image::./images/devon4j-mts/sonarjenkins.PNG[600,500]
-
-==== Technical SonarQube user and settings
-
-===== User Token for SonarQube
-
-* Go to SonarQube.
-* Go to your account.
-
-image::./images/devon4j-mts/sonaraccount.PNG[600,500]
-* Go to Security tab.
-* Generate the token.
-
-
-===== SonarQube Webhook to inform Jenkins
-
-A part of the Build Job will ask SonarQube if the quality gate has been passed. For this step a so called "webhook" has to be configured in SonarQube. To do so,
-
-. Go to SonarQube
-. Select 'Administration'
-. Select 'Configuration', 'General Settings' and select 'Webhooks' in the left menu
-. Add the following webhook
-
-image::./images/devon4j-mts/SonarqubeWebhook.png[float="right"]
-
-. Press 'Save'
-
-=== Deployment Requirements
-
-In case you want to use the deployment jobs, make sure you:
-
-* Have an additional test-server (a PL does not include a test environment, so a separate Linux machine is required)
-
-** SSH access should be available through an SSH-RSA key
-** Docker-CE has to be installed
-** Docker-Compose has to be installed
-
+* Docker-CE has to be installed
+* link:https://success.docker.com/article/how-do-i-enable-the-remote-api-for-dockerd[Docker daemon exposed]
 
 == How to run it
 
@@ -247,7 +149,7 @@ We have job-parameters inside the template Jenkinsfile that will only be active 
 
 === Setup template job in Jenkins
 
-The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw-forge/devon-production-line.git
+The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw/production-line.git
 
 
 === Execute the Jenkins job in your Jenkins
@@ -286,30 +188,38 @@ image::./images/devon4j-mts/JenkinsDeployParameters.png[Jenkins Deployment Param
 
 You need to set the following parameters in order to get it running:
 
-
 .Required Parameters
 [width="100%",options="header,footer"]
 |====================
 | Parameter | Description 
-| sshAgentCredentials | A Jenkins SSH-Credential object. You need to create this and it has to contain a valid SSH authentication to your deployment server.
-| nexusCredentialsId | The nexus technical user that you have created in the prerequisite section.
-| VERSION | The version of the artifact that was built in the build jobs. For example "1.12.3-SNAPSHOT".
-| EXTERNAL_SERVER_IP | The IP of the deployment server.  
-| APPLICATION_DIR | The directory where the artifacts will be stored on the deployment server.
+| registryUrl | The docker registry URL where image is stored.
+| registryCredentialsId | The nexus credentials to access to the docker registry.
+| VERSION | The version of the image that was built in the build jobs. For example "1.12.3-SNAPSHOT".
+| dockerNetwork | The docker network where the container will be deployed.  
 |====================
 
-Default settings that should not be changed:
+Also, the reverse proxy deployment has two more parameters:
 
-.Default Parameters
+.Reverse Proxy extra parameters
 [width="100%",options="header,footer"]
 |====================
 | Parameter | Description 
-| nexusApiUrl |  The internal PL nexus3 URL where it will download the artifacts from.
-| repository | The name of the maven repository. 
+| buildReverseProxy |  If true, it will build a new reverse proxy docker image and then deploy that image.
+| port | The port where the application will be listening. It's a host port, not a container port.
 |====================
+
+[NOTE]
+====
+You can deploy multiple versions of My Thai Star in the same machine by changing the docker network in all deployments and the port in the reverse proxy deployment.
+====
 
 [IMPORTANT]
 ====
-When running the deployment for the first time, you need to execute the *MyThaiStar_DEPLOY-Together* job. It will copy and setup the configuration needed on the deployment server.
+You must choose the same docker network for all deployments
+====
+
+[IMPORTANT]
+====
+You need to deploy the angular and java applications before the reverse proxy. Also, the first you need to check the `buildReverseProxy` parameter in order to create the reverse proxy image and then deploy the container.
 ====
 

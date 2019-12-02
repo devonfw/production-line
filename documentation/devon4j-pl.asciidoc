@@ -18,11 +18,11 @@ toc::[]
 image::images/devon4j-pl/pl.png[400,300]
 image::images/devon4j-pl/devonfw.png[400,300]
 
-= Devon4j Template for Production Line
+= devon4j Template for Production Line
 
 === Overview
 
-This template will configure your PL instance to have a 'ready to use' Java Devon template. It can be used as a starting point for your Java projects. +
+This template will configure your PL instance to have a 'ready to use' devon4j template. It can be used as a starting point for your Java projects. +
 This includes CICD files for a devonfw technology stack with configuration for:
 
 ** docker deployment
@@ -32,10 +32,10 @@ This includes CICD files for a devonfw technology stack with configuration for:
 
 
 == Prerequisites
-To be able to run Jenkins Devon4j job under ProductionLine you need to configure below settings in Jenkins and Gitlab
+To be able to run Jenkins devon4j job under ProductionLine you need to configure below settings in Jenkins and Gitlab
 
 * Jenkins +
-** Add Jenkins Shared Library using documentation https://github.com/devonfw-forge/devon-production-line-shared-lib
+** Add Jenkins Shared Library using documentation https://github.com/devonfw/production-line-shared-lib
 ** Install required plugins: +
 HTTP Request Plugin +
 Allure Jenkins Plugin +
@@ -84,7 +84,7 @@ Default Value: <YOUR_LAM_CORP_ID>
 * Add the template +
 Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
 
-* https://github.com/devonfw-forge/devon-production-line.git
+* https://github.com/devonfw/production-line.git
 
 * devon4j-pl/Jenkinsfile
 
@@ -95,5 +95,5 @@ image::./images/devon4j-pl/devon4j.JPG[800,700]
 == How to run the Template
 
 * Build the job
-* As output of the build new Jenkins Pipline job "Devon4j_build_template" under Java directory will be created and also new repository "devon/devon4j" will be created in Gitlab.
-* Run "Devon4j_build_template" job
+* As output of the build new Jenkins Pipline job "devon4j_build_template" under Java directory will be created and also new repository "devonfw/devon4j" will be created in Gitlab.
+* Run "devon4j_build_template" job

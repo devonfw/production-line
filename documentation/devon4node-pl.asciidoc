@@ -18,11 +18,11 @@ toc::[]
 image::images/devon4node-pl/pl.png[400,300]
 image::images/devon4node-pl/devonfw.png[400,300]
 
-= Devon4node Template for Production Line
+= devon4node Template for Production Line
 
 === Overview
 
-This template will configure your PL instance to have a 'ready to use' Node Devon template. It can be used as a starting point for your Node projects. +
+This template will configure your PL instance to have a 'ready to use' devon4node template. It can be used as a starting point for your Node projects. +
 This includes CICD files for a devonfw technology stack with configuration for:
 
 ** ProductionLine instance
@@ -36,7 +36,7 @@ This includes CICD files for a devonfw technology stack with configuration for:
 To be able to run Jenkins Node job under ProductionLine you need to configure below settings in Jenkins and Gitlab
 
 * Jenkins +
-** Add Jenkins Shared Library using documentation https://github.com/devonfw-forge/devon-production-line-shared-lib
+** Add Jenkins Shared Library using documentation https://github.com/devonfw/production-line-shared-lib
 ** Install required plugins: +
 HTTP Request Plugin +
 Allure Jenkins Plugin +
@@ -85,7 +85,7 @@ Default Value: <YOUR_LAM_CORP_ID>
 * Add the template +
 Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
 
-* https://github.com/devonfw-forge/devon-production-line.git
+* https://github.com/devonfw/production-line.git
 * devon4node-pl/Jenkinsfile
 
 image::./images/devon4node-pl/devon4node.JPG[800,700]
@@ -95,5 +95,5 @@ image::./images/devon4node-pl/devon4node.JPG[800,700]
 == How to run the Template
 
 * Build the job
-* As output of the build new Jenkins Pipline job "Devon4node_build_template" under Node directory will be created and also new repository "devon/devon4node" will be created in Gitlab.
-* Run "Devon4node_build_template" job
+* As output of the build new Jenkins Pipline job "devon4node_build_template" under Node directory will be created and also new repository "devonfw/devon4node" will be created in Gitlab.
+* Run "devon4node_build_template" job
