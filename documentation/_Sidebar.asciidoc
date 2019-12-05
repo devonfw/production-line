@@ -1,5 +1,6 @@
 * link:Home.asciidoc[devonfw Production Line wiki]
-** devonfw Technologies Templates*
+** devonfw Technologies Templates
+*** link:how-to-add-a-template.asciidoc[How to add a Template to your PL instance]
 *** link:devon4j-pl.asciidoc[devon4j Template]
 *** link:devon4ng-pl.asciidoc[devon4ng Template]
 *** link:devon4node-pl.asciidoc[devon4node Template]

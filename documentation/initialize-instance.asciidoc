@@ -82,7 +82,7 @@ The required parameters are:
 . Press the `Build` button.
 . Wait until the pipeline ends.
 
-NOTE: if any plugin is installed, Jenkins will be restarted and the pipeline will fail. You need to execute it again with the same parameters.
+WARNING: if any plugin is installed, Jenkins will be restarted and the pipeline will fail. You need to execute it again with the same parameters.
 
 image::images/initialize-instance/initialize-instance.png[]
 image::images/initialize-instance/initialize-instance2.png[]

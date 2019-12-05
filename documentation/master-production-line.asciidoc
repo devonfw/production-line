@@ -23,6 +23,7 @@ image::./images/pipelinesettings.PNG[]
 
 == devonfw Technologies Templates
 
+include::how-to-add-a-template[leveloffset=2]
 include::devon4j-pl[leveloffset=2]
 include::devon4ng-pl[leveloffset=2]
 include::devon4node-pl[leveloffset=2]
