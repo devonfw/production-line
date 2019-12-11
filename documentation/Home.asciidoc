@@ -1,0 +1,46 @@
+:toc: macro
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+toc::[]
+:idprefix:
+:idseparator: -
+:reproducible:
+:source-highlighter: rouge
+:listing-caption: Listing
+
+= Production Line Templates
+
+This repository contains a collection of templates that can be used inside a Production Line Jenkins to setup/configure and execute certain tasks.
+
+== devonfw Technologies Templates
+
+- link:how-to-add-a-template.asciidoc[How to add a Template to your PL instance]
+- link:devon4j-pl.asciidoc[devon4j Template]
+- link:devon4ng-pl.asciidoc[devon4ng Template]
+- link:devon4node-pl.asciidoc[devon4node Template]
+
+== Utility Templates
+
+- link:inialize-instance.asciidoc[Initialize Instance Template]
+- link:install-sonar-plugin.asciidoc[Install SonarQube Plugin Template]
+- link:docker-configuration.asciidoc[Docker Configuration Template]
+- link:openshift-configuration.asciidoc[OpenShift Configuration Example]
+
+== MrChecker
+
+- link:mrchecker.asciidoc[MrChecker Template]
+
+== Samples
+
+- link:devon4j-mts.asciidoc[My Thai Star sample]
+
+== Troubleshooting
+
+- link:troutbleshoot.asciidoc[Troubleshooting]

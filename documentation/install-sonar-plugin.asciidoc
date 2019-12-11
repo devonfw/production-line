@@ -1,0 +1,61 @@
+:toc: macro
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+toc::[]
+:idprefix:
+:idseparator: -
+:reproducible:
+:source-highlighter: rouge
+:listing-caption: Listing
+
+= Install SonarQube Plugin
+
+== Introduction
+
+SonarQube can extends its behaviour by adding plugins. Some on them can be installed by using the SonarQube Marketplace, others can be installed by copying the .jar into the SonarQube plugins folder.
+
+=== Overview
+
+This template will help you to install SonarQube plugins by copying the .jar into the SonarQube plugins folder. As you do not have access to the Production Line volumes, it will help you when you want to install a plugin that is not installed in the SonarQube Marketplace.
+
+It will:
+
+* Download the .jar file from a provided URL.
+* Copy the .jar file to the plugins folder.
+* Restart the SonarQube server in order to enable the plugin.
+
+NOTE: this template only works in a Production Line instance.
+
+== Template
+
+This template will be automatically created in your jenkins after executing the `Initialize_Instance` template inside the `UTILS` folder with the name `Install_SonarQube_Plugin`.
+
+For manual creation see: link:how-to-add-a-template.asciidoc[How to add a Template]
+
+IMPORTANT: This template needs the link:https://github.com/devonfw/production-line-shared-lib[devonfw Production Line Shared Lib]
+
+=== Parameters
+
+The only parameter required is the plugin download URL. 
+
+=== Execution
+
+. Press the Build with Parameters button
+. Insert plugin the download url. Example: https://github.com/dependency-check/dependency-check-sonar-plugin/releases/download/1.2.6/sonar-dependency-check-plugin-1.2.6.jar
+. Press the `Build` button.
+. Wait until the pipeline ends.
+
+image::./images/install-sonar-plugin/build-install-sonar-plugin.png[]
+image::./images/install-sonar-plugin/build-install-sonar-plugin2.png[]
+
+
+After the execution, when the SonarQube is restarted, you can check that your plugin is installed visiting the Marketplace. 
+
+image::./images/install-sonar-plugin/sonar-plugin.png[]

@@ -1,25 +1,28 @@
-@Library('ProductionLineTemplateLib@release/1.1')
+@Library('ProductionLineTemplateLib')
 
 //Sharedlibrary configuration
-import com.capgemini.productionline.configuration.*
+import com.capgemini.productionline.configuration.JenkinsConfiguration
+import com.capgemini.productionline.configuration.GitLab
+import com.capgemini.productionline.configuration.ProductionLineGlobals
+import com.capgemini.productionline.configuration.DependencyCheckConfiguration
 
 //Nexus nexusConfiguration = new Nexus();
-Jenkins jenkinsConfiguration = new Jenkins();
-GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN, ProductionLineGlobals.GITLAB_BASE_URL);
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+DependencyCheckConfiguration dependencyCheckConfig = new DependencyCheckConfiguration(this);
 
 pipeline {
     agent any
     
     //Jenkins Job Parameters
     parameters { 
-        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: 'REPLACE_ME', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
-        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devon', description: 'GitLab group name where the repository will be created.') 
+        credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'GITLAB_USER_PRIVATE_TOKEN', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'GitLab group name where the repository will be created.') 
         string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'MyThaiStar', description: 'GitLab repository name where My Thai Star will be cloned to.') 
         string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'GitLab repository default branch name.') 
-        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample Devon4J application', description: 'GitLab repository description.') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'MyThaiStar Sample devon4j application', description: 'GitLab repository description.') 
         string(name: 'GITLAB_CLONE_URL', defaultValue: 'https://github.com/devonfw/my-thai-star.git', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
         string(name: 'JENKINS_FOLDER', defaultValue: 'MTS', description: 'Folder where all pipelines will be created.') 
-
+        string(name: 'NEW_DOCKER_HOST', defaultValue: 'tcp://127.0.0.1:2375', description: 'Remote docker url', trim: true)
     }
     
     stages {
@@ -31,14 +34,15 @@ pipeline {
                     println "Trying to install all required plugins"
                     //Install the required Jenkins plugins
                     //The MTS template currently requires the following plugins to be present
-                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin"])
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "nodejs", "dependency-check-jenkins-plugin", "docker-plugin", "docker-build-step", "docker-workflow", "jclouds-jenkins"])
                     
                     if( pluginsHaveBeenInstalled ) {
                         println "New plugins were installed - Restart"
                         // We need to restart Jenkins in case new plugins have been installed.
                         //if set to false, then do a force restart
                         //still requires to manually start the job again afterwards
-                        jenkinsConfiguration.restartJenkins(false);
+                        jenkinsConfiguration.restartJenkins(false)
+                        error "Restarting Jenkins, please execute pipeline after restart"
                     } else {
                         println "No plugins were installed"
                     }
@@ -46,14 +50,16 @@ pipeline {
                     //Add nodejs
                     //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
                     println "Trying to install nodejs config"
-                    String installName = "NodeJS 10.14.0"
-                    String nodeJS_Version = "10.14.0"
+                    String installName = "NodeJS 10.17.0"
+                    String nodeJS_Version = "10.17.0"
                     String npmPackages = "yarn"
                     String home = ""
                     long npmPackagesRefreshHours = 100
 
                     nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
-                    
+                    jdkInstallSuccess = jenkinsConfiguration.addJdkVersion("OpenJDK11", "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.5%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.5_10.tar.gz", "jdk-11.0.5+10")
+                    dependencyCheckConfig.installDependencyCheck('dependency-check', '5.2.4','')
+
                     //Add the required script approval
                     println "Adding required script approvals in Jenkins"
                     jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
@@ -65,16 +71,28 @@ pipeline {
                 }
             }
         }
+
+        stage('Docker setup') {
+            steps {
+                script {
+                    build job: "UTILS/Docker_Configuration", wait: false, parameters: [
+                        string(name: 'NEW_DOCKER_HOST', value: params.NEW_DOCKER_HOST),
+                    ]
+                }
+            }
+        }
         
         stage('Clone repo') {
             steps{
                 script{
-                    
+                    def token = GitLab.gitlabApiToken(params.GITLAB_USER_PRIVATE_TOKEN)
+                    println token
+                    GitLab gitlabConfiguration = new GitLab(this, token, ProductionLineGlobals.GITLAB_BASE_URL);
                     println "Trying to create gitlab group"
                     //Check if group already exists
                     if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
                         println "No group existing yet, trying to create"
-                        //Create a group for devon
+                        //Create a group for devonfw
                         // public createGroup(String groupname, String grouppath, String groupdesc, String grouptype) {
                         gitlabConfiguration.createGroup(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_DESCRIPTION, "public")
                     } else {
@@ -122,7 +140,7 @@ pipeline {
                     println "Trying to create Build job"
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_FRONTEND_BUILD") {
-                            description('Build job for MyThaiStar sample devon application. Frontend component.')
+                            description('Build job for MyThaiStar sample devonfw application. Frontend component.')
                             definition {
                                 cpsScm {
                                     scm {
@@ -145,7 +163,7 @@ pipeline {
                     println "Trying to create Build job"
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_SERVER_BUILD") {
-                            description('Build job for MyThaiStar sample devon application. Server component.')
+                            description('Build job for MyThaiStar sample devonfw application. Server component.')
                             definition {
                                 cpsScm {
                                     scm {
@@ -169,6 +187,17 @@ pipeline {
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_FRONTEND_DEPLOY") {
                             description('Deploy job for MyThaiStar Frontend Only.')
+                            parameters {
+                                credentialsParam('registryCredentialsId') {
+                                    type('com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
+                                    required()
+                                    defaultValue('nexus-api')
+                                    description('registry credentials')
+                                }
+                                stringParam('registryUrl', 'https://docker-registry-devon.s2-eu.capgemini.com', 'docker registry url')
+                                stringParam('VERSION', '3.2.0', 'Version number')
+                                stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
+                            }
                             definition {
                                 cpsScm {
                                     scm {
@@ -192,6 +221,17 @@ pipeline {
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_SERVER_DEPLOY") {
                             description('Deploy job for MyThaiStar Backend only.')
+                            parameters {
+                                credentialsParam('registryCredentialsId') {
+                                    type('com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
+                                    required()
+                                    defaultValue('nexus-api')
+                                    description('registry credentials')
+                                }
+                                stringParam('registryUrl', 'https://docker-registry-devon.s2-eu.capgemini.com', 'docker registry url')
+                                stringParam('VERSION', '3.2.0', 'Version number')
+                                stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
+                            }
                             definition {
                                 cpsScm {
                                     scm {
@@ -213,8 +253,20 @@ pipeline {
                     //Both at once
                     println "Trying to create Deployment job"
                     jobDsl scriptText: """
-                        pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_DEPLOY-Together") {
+                        pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_REVERSE-PROXY_DEPLOY") {
                             description('Deployment Pipeline for both Frontend and Backend at the same time.')
+                            parameters {
+                                credentialsParam('registryCredentialsId') {
+                                    type('com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
+                                    required()
+                                    defaultValue('nexus-api')
+                                    description('registry credentials')
+                                }
+                                booleanParam('buildReverseProxy', false, 'Build again the reverse proxy image?')
+                                stringParam('registryUrl', 'https://docker-registry-devon.s2-eu.capgemini.com', 'docker registry url')
+                                stringParam('VERSION', '3.2.0', 'Version number')
+                                stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
+                            }
                             definition {
                                 cpsScm {
                                     scm {

@@ -1,10 +1,27 @@
+:toc: macro
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+toc::[]
+:idprefix:
+:idseparator: -
+:reproducible:
+:source-highlighter: rouge
+:listing-caption: Listing
+
 = MrChecker under ProductionLine
 
-image::./images/mrchecker&pl.JPG[500,400]
+image::./images/mrchecker/pl.png[500,400]
 
 == Introduction
 MrChecker is end to end automation test framework written in Java. It has been released
-by Devon team which also is responsible for support of this framework. +
+by devonfw but it is not supported by the devonfw core team. +
 
 This framework consist of eight test modules:
 
@@ -20,33 +37,33 @@ This framework consist of eight test modules:
 To be able to run Jenkins MrChecker job under ProductionLine you need to configure below settings in Jenkins and Gitlab
 
 * Jenkins +
-** Add Jenkins Shared Library using documentation https://github.com/devonfw-forge/devon-production-line-shared-lib
+** Add Jenkins Shared Library using documentation https://github.com/devonfw/production-line-shared-lib
 ** Install required plugins: +
 HTTP Request Plugin +
 Allure Jenkins Plugin +
 ** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
 
-image::./images/allure.JPG[500,400]
-image::./images/maven.JPG[500,400]
+image::./images/mrchecker/allure.JPG[500,400]
+image::./images/mrchecker/maven.JPG[500,400]
 
 
 * Gitlab +
 ** Generate User Private Token +
 Go to your Profile in Gitlab +
 
-image::./images/profile.png[500,400]
+image::./images/mrchecker/profile.png[500,400]
 
 Next click on the pen icon +
 
-image::./images/pen.png[500,400]
+image::./images/mrchecker/pen.png[500,400]
 
 On the left menu choose Access Tokens and put token name and check fields like below +
 
-image::./images/token.JPG[600,500]
+image::./images/mrchecker/token.JPG[600,500]
 
 Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
 
-image::./images/created_token.JPG[600,500]
+image::./images/mrchecker/created_token.JPG[600,500]
 
 The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps: +
 
@@ -63,7 +80,7 @@ Name: GITLAB_USER_PRIVATE_TOKEN +
 Default Value: <GITLAB_TOKEN_STRING_YOU_JUST_CREATED>
 
 * Add the template +
-The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw-forge/devon-production-line.git
+The guide on how to add a template to your Jenkins can be found in the root directory of the template repository: https://github.com/devonfw/production-line.git
 * Save job configuration
 
 == How to run the Template
@@ -73,13 +90,13 @@ The guide on how to add a template to your Jenkins can be found in the root dire
 * As output of the build new Jenkins Pipline job is created with name "MrChecker_Example_Tests" also new repository "Mrchecker" will be created in Gitlab
 * Build "MrChecker_Example_Tests" job
 
-image::./images/pljob.JPG[500,400]
+image::./images/mrchecker/pljob.JPG[500,400]
 
 == Expected Result
 
 * As output of this job Allure Report will be generated
 
-image::./images/allure_report.JPG[500,400]
+image::./images/mrchecker/allure_report.JPG[500,400]
 
 == Summary
 
@@ -91,4 +108,4 @@ MrChecker offers two projects to your disposal: +
 
 To change the project change script path at the bottom of the "MrChecker_Example_Tests" job.
 
-image::./images/pipeline_script.JPG[500,400]
+image::./images/mrchecker/pipeline_script.JPG[500,400]
