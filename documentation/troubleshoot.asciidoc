@@ -19,7 +19,7 @@ toc::[]
 
 == Introduction
 
-In this section you can find the solution of the most common errors using the templates.
+In this section you can find the solution of the most common errors using the templates. 
 
 == Template startup failed
 
