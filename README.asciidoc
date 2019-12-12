@@ -4,7 +4,7 @@ This repository contains a collection of templates that can be used inside a Pro
 
 == Documentation
 
-You can find all documentation in our link:https://github.com/devonfw/devon4node/wiki[wiki].
+You can find all documentation in our link:https://github.com/devonfw/devon4node/wiki[wiki]. 
 
 == Code of conduct
 
