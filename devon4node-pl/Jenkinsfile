@@ -75,10 +75,31 @@ pipeline{
 
                     // Get the Pl Url
                     env.PL_URL = JENKINS_URL.replace("https://", "").split("/")[0]
+                    env.REGISTRY_URL = 'docker-registry-' + env.PL_URL
                     
                     //Add the required script approval
                     println "Adding required script approvals in Jenkins"
                     jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")                 
+                }
+            }
+        }
+
+        stage('Configuring DOCKER'){
+            when {
+                beforeInput true
+                equals expected: 'docker', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the docker host'
+                parameters {
+                    string defaultValue: 'tcp://127.0.0.1:2763', description: 'The remote docker daemon URL', name: 'DOCKER_URL', trim: true
+                    credentials(credentialType: 'org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials', description: 'Credentials to access docker daemon', name: 'DOCKER_CERT', required: true)
+                }
+            }
+            steps {
+                script {
+                    env.DOCKER_URL = DOCKER_URL
+                    env.DOCKER_CERT = DOCKER_CERT
                 }
             }
         }
@@ -121,14 +142,14 @@ pipeline{
                             if (!secret.exists()) {
                                 echo "secret not exist"
                                 withCredentials([usernamePassword(credentialsId: "${DOCKER_REGISTRY_CREDENTIALS}", passwordVariable: 'drpass', usernameVariable: 'druser')]) {
-                                    openshift.create('secret', "docker-registry ${env.SECRET_NAME} --docker-server=docker-registry-${env.PL_URL} --docker-username=${druser} --docker-password=${drpass} --docker-email=no-reply@email.com")
+                                    openshift.create('secret', "docker-registry ${env.SECRET_NAME} --docker-server=${env.REGISTRY_URL} --docker-username=${druser} --docker-password=${drpass} --docker-email=no-reply@email.com")
                                 }
                             }
 
                             // Create environments for dev, uat and prod
-                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=develop"  ) )
-                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=uat"  ) )
-                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-prod", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=production"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=develop"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=uat"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-stage", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=production"  ) )
                         }
                     }
                 }
@@ -195,6 +216,7 @@ pipeline{
                             description('Build job for ${PROJECT_NAME_FULL}.')
                             branchSources {
                                 git {
+                                    id(${UUID.randomUUID().toString()})
                                     remote('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git')
                                     credentialsId('github-ci')
                                     includes('master release* develop')
@@ -222,7 +244,7 @@ pipeline{
                 cleanWs()
                 deleteDir()
                 
-                sh 'npm i -g @devon4node/cli @devonfw/cicdgen'
+                sh 'sudo env "PATH=\$PATH" npm i -g @devon4node/cli @devonfw/cicdgen'
             }
         }     
         stage('devon4node new') {
@@ -243,11 +265,14 @@ pipeline{
                     def ocString = ''
 
                     if (params.DEPLOY == 'docker'){
-                        dockerString = "--docker --plurl ${env.PL_URL} "
+                        dockerString = "--docker --dockerurl ${env.DOCKER_URL} --registryurl ${env.REGISTRY_URL} "
+                        if (env.DOCKER_CERT) {
+                            dockerString += "--dockercertid ${env.DOCKER_CERT} "
+                        }
                     }
 
                     if (params.DEPLOY == 'openshift'){
-                        ocString = "--openshift --ocname ${env.OC_NAME} --plurl ${env.PL_URL} "
+                        ocString = "--openshift --ocname ${env.OC_NAME} --registryurl ${env.REGISTRY_URL} "
                     }
                 
                     dir(PROJECT_NAME_FULL) {

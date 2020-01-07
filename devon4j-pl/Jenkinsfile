@@ -88,6 +88,24 @@ pipeline{
                 }
             }
         }
+
+        stage('Configuring Openshift'){
+            when {
+                beforeInput true
+                equals expected: 'docker', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the docker host'
+                parameters {
+                    string defaultValue: 'tcp://127.0.0.1:2376', description: 'External docker daemon URL', name: 'DOCKER_URL', trim: true
+                    credentials(credentialType: 'org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials', description: 'External docker daemon credentials', name: 'DOCKER_CREDENTIALS')
+                }
+            }
+            steps {
+                env.DOCKER_URL = DOCKER_URL
+                env.DOCKER_CREDENTIALS = DOCKER_CREDENTIALS
+            } 
+        }
         
         stage('Configuring Openshift'){
             when {
@@ -135,7 +153,7 @@ pipeline{
                             // Create environments for dev, uat and prod
                             openshift.create( openshift.process( '', '-f', 'devon4j.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "OPENJDK_TAG=${OPENJDK_TAG}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
                             openshift.create( openshift.process( '', '-f', 'devon4j.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "OPENJDK_TAG=${OPENJDK_TAG}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
-                            openshift.create( openshift.process( '', '-f', 'devon4j.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-prod", "-p", "OPENJDK_TAG=${OPENJDK_TAG}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4j.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-stage", "-p", "OPENJDK_TAG=${OPENJDK_TAG}", "-p", "DOCKER_IMAGE=docker-registry-${env.PL_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
                         }
                     }
                 }
@@ -252,7 +270,11 @@ pipeline{
                     def ocString = ''
 
                     if (params.DEPLOY == 'docker'){
-                        dockerString = "--docker --plurl ${env.PL_URL} "
+                        dockerString = "--docker --plurl ${env.PL_URL} --dockerurl ${env.DOCKER_URL} "
+                        
+                        if(env.DOCKER_CREDENTIALS) {
+                            dockerString += "--dockercertid ${env.DOCKER_CREDENTIALS} "
+                        }
                     }
 
                     if (params.DEPLOY == 'openshift'){
