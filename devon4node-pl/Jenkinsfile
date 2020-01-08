@@ -216,7 +216,7 @@ pipeline{
                             description('Build job for ${PROJECT_NAME_FULL}.')
                             branchSources {
                                 git {
-                                    id(${UUID.randomUUID().toString()})
+                                    id('${UUID.randomUUID().toString()}')
                                     remote('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git')
                                     credentialsId('github-ci')
                                     includes('master release* develop')
