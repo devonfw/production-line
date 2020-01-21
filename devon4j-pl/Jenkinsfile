@@ -21,7 +21,7 @@ pipeline{
         string(name: 'DB_TYPE', defaultValue: 'h2', description: 'The type of the database. Possible values: h2|postgresql|mysql|mariadb|oracle|hana|db2') 
         string(name: 'GROUP_ID', defaultValue: 'com.devonfw', description: 'The group id of the project.') 
         credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'gitlab-api-token', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
-        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'Name of the GitLab group. The repository will be create inside this group.') 
         string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'devonfw for java PL template', description: 'Description of the repository.')
         choice choices: ['none', 'docker', 'openshift'], description: 'Choose the environment where you want to deploy', name: 'DEPLOY'    
     }
@@ -34,9 +34,6 @@ pipeline{
         stage('PL setup') {
             steps{
                 script {
-                    if (params.DEPLOY == 'docker' && jenkinsConfiguration.getLastStableBuild('UTILS/Docker_Configuration') == null) {
-                        error "In order to deploy using docker, you need to execute the job UTILS/Docker_Configuration as prerequisite"
-                    }
                     if (params.DEPLOY == 'openshift' && jenkinsConfiguration.getLastStableBuild('UTILS/Openshift_Configuration') == null) {
                         error "In order to deploy using openshift, you need to execute the job UTILS/Openshift_Configuration as prerequisite"
                     }

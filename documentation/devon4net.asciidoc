@@ -15,21 +15,22 @@ toc::[]
 :source-highlighter: rouge
 :listing-caption: Listing
 
-image::images/devon4j-pl/pl.png[400,300]
-image::images/devon4j-pl/devonfw.png[400,300]
+image::images/devon4node-pl/pl.png[400,300]
+image::images/devon4node-pl/devonfw.png[400,300]
 
-= devon4j Template for Production Line
+= devon4net Template for Production Line
 
 === Overview
 
-This template will configure your PL instance to have a 'ready to use' devon4j template. It can be used as a starting point for your Java projects. +
+This template will configure your PL instance to have a 'ready to use' devon4net template. It can be used as a starting point for your .NET projects. +
 This includes CICD files for a devonfw technology stack with configuration for:
 
+** ProductionLine instance
 ** docker or openshift deployment
 ** pushing artifacts to nexus3
 
 == Prerequisites
-To be able to run Jenkins devon4j job under ProductionLine you need to configure below settings in Jenkins and Gitlab
+To be able to run Jenkins Node job under ProductionLine you need to configure below settings in Jenkins and Gitlab
 
 * Jenkins +
 ** Execute the link:./initialize-instance.asciidoc[initialize instance template]
@@ -38,26 +39,26 @@ To be able to run Jenkins devon4j job under ProductionLine you need to configure
 ** Generate User Private Token +
 Go to your Profile in Gitlab +
 
-image::./images/devon4j-pl/profile.png[500,400]
+image::./images/devon4node-pl/profile.png[500,400]
 
 Next click on the pen icon +
 
-image::./images/devon4j-pl/pen.png[500,400]
+image::./images/devon4node-pl/pen.png[500,400]
 
 On the left menu choose Access Tokens and put token name and check fields like below +
 
-image::./images/devon4j-pl/token.JPG[600,500]
+image::./images/devon4node-pl/token.JPG[600,500]
 
 Click "Create personal access token", you should receive notification about created token and token string. Copy the token string.
 
-image::./images/devon4j-pl/created_token.JPG[800,700]
+image::./images/devon4node-pl/created_token.JPG[600,500]
 
 The GitLab API user needs to have API access and the rights to create a new group. To set this permission follow the next steps: +
 
 * Enter the Admin control panel
 * Select 'Users'
 * Select the user(s) in question and click 'Edit'
-* Scroll down to 'Access' and enable 'Can Create Group'
+* Scroll down to 'Access' and un-tick 'Can Create Group'
 
 == How to insert the Template
 
@@ -68,7 +69,6 @@ In order to add the template, you can follow the link:./how-to-add-a-template.as
 * Build the job with parameters:
 ** PROJECT_NAME: The project name.
 ** PROJECT_SUFFIX: The project name suffix. As your project can have multiple assets (backend, frontend, middleware...), you can define a suffix in order to identify each one with a different name
-** DB_TYPE: The type of the database. Possible values: h2|postgresql|mysql|mariadb|oracle|hana|db2
 ** GROUP_ID: The group id of the project.
 ** GITLAB_USER_PRIVATE_TOKEN: Private Token of a Production Line Gitlab User that can be used to create repositories. Created as prerequisite, you only need to add it as credential with GitLab API token *Kind*.
 ** GITLAB_CREATE_GROUP_NAME: Name of the GitLab group. The repository will be create inside this group.
@@ -86,7 +86,7 @@ After executing this template, you will have:
 * A new GitLab repository.
 ** The repository group is the value passed in the GITLAB_CREATE_GROUP_NAME parameter.
 ** The repository name is _PROJECT_NAME_-_PROJECT_SUFFIX_
-** The repository contains a clean devon4j project.
+** The repository contains a clean devon4net project.
 ** The repository contains a Jenkinsfile.
 ** The repository has already setted the jenkins webhook.
 ** The repository protects the branches master and release/* to only maintainers to push. Develop is the default branch.

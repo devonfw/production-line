@@ -46,6 +46,30 @@ pipeline {
             }
         }
 
+        stage('Add docker custom tool') {
+            when {
+                anyOf {
+                    equals expected: 'Docker', actual: params.installDeploymentPlugins
+                    equals expected: 'Docker+Openshift', actual: params.installDeploymentPlugins
+                }
+            }
+            steps {
+                script {
+                    println "Trying to install docker as custom tool"
+                        
+                    jenkinsConfiguration.addCustomTool("docker-global", "", """if ! which docker > /dev/null; then
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
+    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian \$(lsb_release -cs) stable"
+    sudo apt-get update
+    sudo apt-get install -y docker-ce-cli
+    docker -v
+fi""", "/usr/bin")
+                }
+            }
+        }
+
         stage('Configure SonarQube') {
             steps {
                 script {

@@ -26,27 +26,15 @@ This template will configure your PL instance to have a 'ready to use' devon4nod
 This includes CICD files for a devonfw technology stack with configuration for:
 
 ** ProductionLine instance
-** docker deployment
+** docker or openshift deployment
 ** pushing artifacts to nexus3
-
-
-
 
 == Prerequisites
 To be able to run Jenkins Node job under ProductionLine you need to configure below settings in Jenkins and Gitlab
 
 * Jenkins +
-** Add Jenkins Shared Library using documentation https://github.com/devonfw/production-line-shared-lib
-** Install required plugins: +
-HTTP Request Plugin +
-Allure Jenkins Plugin +
-NodeJS Plugin +
-Jobs DSL Plugin
-** In Jenkins Global Tool Configuration configure Allure Commandline and Maven like +
-
-image::./images/devon4node-pl/allure.JPG[500,400]
-image::./images/devon4node-pl/maven.JPG[500,400]
-
+** Execute the link:./initialize-instance.asciidoc[initialize instance template]
+** If you plan to deploy into OpenShift, you need to execute link:./openshift-configuration.asciidoc[openshift-configuration] template also.
 * Gitlab +
 ** Generate User Private Token +
 Go to your Profile in Gitlab +
@@ -74,26 +62,34 @@ The GitLab API user needs to have API access and the rights to create a new grou
 
 == How to insert the Template
 
-* Create new Jenkins Pipeline Job
-* In job configuration check "This project is parametrized", choose "String parameter and provide +
-Name: GITLAB_USER_PRIVATE_TOKEN +
-Default Value: <GITLAB_TOKEN_STRING_YOU_JUST_CREATED>
-
-Name: USERNAME +
-Default Value: <YOUR_LAM_CORP_ID>
-
-* Add the template +
-Scrool down to the Pipeline section, choose "Pipeline script from SCM, configure like below:
-
-* https://github.com/devonfw/production-line.git
-* devon4node-pl/Jenkinsfile
-
-image::./images/devon4node-pl/devon4node.JPG[800,700]
-
-* Save job configuration
+In order to add the template, you can follow the link:./how-to-add-a-template.asciidoc[guide].
 
 == How to run the Template
 
-* Build the job
-* As output of the build new Jenkins Pipline job "devon4node_build_template" under Node directory will be created and also new repository "devonfw/devon4node" will be created in Gitlab.
-* Run "devon4node_build_template" job
+* Build the job with parameters:
+** PROJECT_NAME: The project name.
+** PROJECT_SUFFIX: The project name suffix. As your project can have multiple assets (backend, frontend, middleware...), you can define a suffix in order to identify each one with a different name
+** GROUP_ID: The group id of the project.
+** GITLAB_USER_PRIVATE_TOKEN: Private Token of a Production Line Gitlab User that can be used to create repositories. Created as prerequisite, you only need to add it as credential with GitLab API token *Kind*.
+** GITLAB_CREATE_GROUP_NAME: Name of the GitLab group. The repository will be create inside this group.
+** GITLAB_CREATE_PROJECT_DESCRIPTION: Description of the repository.
+** DEPLOY: Choose the environment where you want to deploy. The deployment could be *none*, *docker* or *openshift*. If *docker* or *openshift* were selected, extra parameters will be required in their dedicated steps:
+*** Configuring DOCKER:
+**** DOCKER_URL: The remote docker daemon URL
+**** DOCKER_CERT: Credentials to access docker daemon. If the daemon is not secure, you can leave this empty.
+*** Configuring Openshift:
+**** OC_NAME: Openshift cluster name. It was defined in the Openshift Configuration template
+**** DOCKER_REGISTRY_CREDENTIALS: Nexus docker registry user credentials. It was created in the initialize instance pipeline. The default username is nexus-api, the default password is the same as your service account.
+
+After executing this template, you will have:
+
+* A new GitLab repository.
+** The repository group is the value passed in the GITLAB_CREATE_GROUP_NAME parameter.
+** The repository name is _PROJECT_NAME_-_PROJECT_SUFFIX_
+** The repository contains a clean devon4node project.
+** The repository contains a Jenkinsfile.
+** The repository has already setted the jenkins webhook.
+** The repository protects the branches master and release/* to only maintainers to push. Develop is the default branch.
+* A new multibranch pipeline in jenkins inside the folder _PROJECT_NAME_ with the name _PROJECT_NAME_-_PROJECT_SUFFIX_. As the webhook is already configured, it should be executed on every push to GitLab repository.
+* If you choose docker for deployment, your Jenkinsfile should contain two extra stages in order to build and deploy the docker image. Also, the repository should contain the Dockerfiles to create the docker images.
+* If you choose OpenShift for deployment, three new applications should be created in your OpenShift. Those applications represent three environments of your application: develop, uat and stage. Also, your Jenkinsfile should contain three extra stages in order to build and deploy the docker image and check that the pod is running without errors. Also, the repository should contain the Dockerfiles to create the docker images.
