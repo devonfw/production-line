@@ -1,35 +1,53 @@
-@Library('ProductionLineTemplateLib@release/1.1')
+@Library('ProductionLineTemplateLib')
 
 import com.capgemini.productionline.configuration.*
 
-Jenkins jenkinsConfiguration = new Jenkins();
-GitLab gitlabConfiguration = new GitLab(this, params.GITLAB_USER_PRIVATE_TOKEN, ProductionLineGlobals.GITLAB_BASE_URL);
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+GitLab gitlabConfiguration;
+OpenshiftConfiguration openshiftConfiguration = new OpenshiftConfiguration(this);
 
 pipeline{
+    
     agent any
 
-  tools {
-        nodejs "NodeJS LTS"
-    }
     //Jenkins Job Parameters
     parameters { 
-        string(name: 'GITLAB_USER_PRIVATE_TOKEN', defaultValue: '', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.') 
-        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'Name of the group that will be created inside GitLab to clone the repo.') 
-        string(name: 'GITLAB_CREATE_PROJECT_NAME', defaultValue: 'devon4node', description: 'Name of the repository inside GitLab that will be created.') 
-        string(name: 'GITLAB_CREATE_BRANCH', defaultValue: 'master', description: 'Branch') 
-        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'devon4node PL template', description: 'Description of the repository.') 
-        string(name: 'GITLAB_CLONE_URL', defaultValue: '', description: 'Private Token of a Production Line Gitlab User that can be used to create repositories.') 
-        string(name: 'USERNAME', defaultValue: '', description: 'Username of a Production Line Gitlab User that can be used to create repositories.')     
+        string(name: 'PROJECT_NAME', defaultValue: 'devonfw', description: 'Name of the project.') 
+        string(name: 'PROJECT_SUFFIX', defaultValue: 'node', description: 'Suffix of the project. For example, if your project name is devonfw and your suffix is node, the project name will be devonfw-node.') 
+        string(name: 'GROUP_ID', defaultValue: 'com.devonfw', description: 'The group id of the project.') 
+        credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'gitlab-api-token', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
+        string(name: 'GITLAB_CREATE_GROUP_NAME', defaultValue: 'devonfw', description: 'Name of the GitLab group. The repository will be create inside this group.') 
+        string(name: 'GITLAB_CREATE_PROJECT_DESCRIPTION', defaultValue: 'devonfw for node PL template', description: 'Description of the repository.')
+        choice choices: ['none', 'docker', 'openshift'], description: 'Choose the environment where you want to deploy', name: 'DEPLOY'    
+    }
+
+    environment {
+        NODE_VERSION = '10.17.0'
     }
     
     stages {
         stage('PL setup') {
             steps{
-                script{
+                script {
+                    if (params.DEPLOY == 'openshift' && jenkinsConfiguration.getLastStableBuild('UTILS/Openshift_Configuration') == null) {
+                        error "In order to deploy using openshift, you need to execute the job UTILS/Openshift_Configuration as prerequisite"
+                    }
+                    PROJECT_NAME_FULL = params.PROJECT_NAME + "-" + params.PROJECT_SUFFIX
+
                     println "Trying to install all required plugins"
                     //Install the required Jenkins plugins
                     //The template currently requires the following plugins to be present
-                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(["http_request", "job-dsl", "pipeline-maven", "NodeJS+Plugin"])
+                    def pluginsToInstall = ["ssh-credentials", "custom-tools-plugin", "http_request", "job-dsl", "sonar", "ansible", "pipeline-maven", "nodejs", "gitlab-plugin"]
+
+                    if (params.DEPLOY == 'docker') {
+                        pluginsToInstall << "docker-plugin" << "docker-build-step" << "docker-workflow" << "jclouds-jenkins"
+                    }
+
+                    if (params.DEPLOY == 'openshift') {
+                        pluginsToInstall << 'openshift-client'
+                    }
+
+                    def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(pluginsToInstall)
                     
                     if( pluginsHaveBeenInstalled ) {
                         println "New plugins were installed - Restart"
@@ -37,31 +55,112 @@ pipeline{
                         //if set to false, then do a force restart
                         //still requires to manually start the job again afterwards
                         jenkinsConfiguration.restartJenkins(false);
+                        error "Restarting Jenkins, please execute pipeline after restart"
                     } else {
                         println "No plugins were installed"
                     }
 
                     //Add nodejs
-                    //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
                     println "Trying to install nodejs config"
-                    String installName = "NodeJS 10.14.0"
-                    String nodeJS_Version = "10.14.0"
+                    String installName = "NodeJS ${NODE_VERSION}"
+                    String nodeJS_Version = NODE_VERSION
                     String npmPackages = "yarn"
                     String home = ""
                     long npmPackagesRefreshHours = 100
 
                     nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
+
+                    // Get the Pl Url
+                    env.PL_URL = JENKINS_URL.replace("https://", "").split("/")[0]
+                    env.REGISTRY_URL = 'docker-registry-' + env.PL_URL
                     
                     //Add the required script approval
                     println "Adding required script approvals in Jenkins"
                     jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")                 
                 }
             }
-        }  
-        stage('Create devon4node repo') {
+        }
+
+        stage('Configuring DOCKER'){
+            when {
+                beforeInput true
+                equals expected: 'docker', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the docker host'
+                parameters {
+                    string defaultValue: 'tcp://127.0.0.1:2763', description: 'The remote docker daemon URL', name: 'DOCKER_URL', trim: true
+                    credentials(credentialType: 'org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials', description: 'Credentials to access docker daemon', name: 'DOCKER_CERT', required: true)
+                }
+            }
+            steps {
+                script {
+                    env.DOCKER_URL = DOCKER_URL
+                    env.DOCKER_CERT = DOCKER_CERT
+                }
+            }
+        }
+        
+        stage('Configuring Openshift'){
+            when {
+                beforeInput true
+                equals expected: 'openshift', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the openshift host'
+                parameters {
+                    string defaultValue: 'default', description: 'Openshift configuration name', name: 'OC_NAME', trim: true
+                    credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'nexus-devon', description: 'Nexus registry integration user credentials', name: 'DOCKER_REGISTRY_CREDENTIALS', required: true)
+                }
+            }
+            environment {
+                PORT='3000'
+                CPU='100m'
+                MEMORY='512Mi'
+            }
+            tools {
+                oc 'OpenShiftv3.11.0'
+            }
+            steps {
+                script {
+                    if(!openshiftConfiguration.existsOpenshiftGlobalConfiguration(OC_NAME)) {
+                        error "Cluster configuration called ${OC_NAME} does not exists, please create it. You can use the UTILS/Openshift_Configuration template."
+                    }
+                    env.OC_NAME = OC_NAME
+
+                    sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4node/devon4node.yaml"""
+
+                    env.SECRET_NAME = "docker-registry-" + env.PL_URL.split("\\.")[0]
+
+                    openshift.withCluster(env.OC_NAME){
+                        openshift.withProject() {
+                            // Create secret if not exist
+                            def secret = openshift.selector('secret', "${env.SECRET_NAME}")
+                            if (!secret.exists()) {
+                                echo "secret not exist"
+                                withCredentials([usernamePassword(credentialsId: "${DOCKER_REGISTRY_CREDENTIALS}", passwordVariable: 'drpass', usernameVariable: 'druser')]) {
+                                    openshift.create('secret', "docker-registry ${env.SECRET_NAME} --docker-server=${env.REGISTRY_URL} --docker-username=${druser} --docker-password=${drpass} --docker-email=no-reply@email.com")
+                                }
+                            }
+
+                            // Create environments for dev, uat and prod
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=develop"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=uat"  ) )
+                            openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${params.PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-stage", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=production"  ) )
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Create Devon4node repo') {
             steps{
                 script{          
                     println "Trying to create gitlab group"
+                    // Get GitLab Token and define GitLab configuration.
+                    def token = GitLab.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
+                    gitlabConfiguration = new GitLab(this, token, ProductionLineGlobals.GITLAB_BASE_URL);
+
                     //Check if group already exists
                     if(gitlabConfiguration.getGroupId(params.GITLAB_CREATE_GROUP_NAME) == ""){
                         println "No group existing yet, trying to create"
@@ -73,21 +172,21 @@ pipeline{
                     }
                     //Check if project already exists
                     println "Trying co create Gitlab project"
-                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, params.GITLAB_CREATE_PROJECT_NAME) == ""){
+                    if(gitlabConfiguration.getProjectId(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL) == ""){
                         println "No project with the same name exists yet, trying to create"
                         //Create a new public repository for devon4node in the Production Line
                         gitlabConfiguration.createProject(
                             params.GITLAB_CREATE_GROUP_NAME, 
-                            params.GITLAB_CREATE_PROJECT_NAME, 
-                            params.GITLAB_CREATE_PROJECT_NAME, 
+                            PROJECT_NAME_FULL, 
+                            PROJECT_NAME_FULL, 
                             params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
-                            params.GITLAB_CREATE_BRANCH, 
-                            params.GITLAB_CLONE_URL,
+                            "develop", 
                             "public"
                         )
                     } else {
                         println "Project with the same name already exists"
                     }
+                    gitlabConfiguration.createWebhook(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "http://jenkins-core:8080/jenkins/project/${PROJECT_NAME}/${PROJECT_NAME_FULL}", '')
                 }
             }
         }
@@ -102,18 +201,21 @@ pipeline{
                     //Prepare folders in Jenkins for the jobs
                     println "Trying to create folder for jobs"
                     jobDsl scriptText: """
-                        folder("Node"){
-                            description('Jobs generated by the devon4node Template.')
+                        folder("${PROJECT_NAME}"){
+                            description('Jobs for ${PROJECT_NAME} project.')
                         }
                         """
+
                     //Build job
                     println "Trying to create Build job"
                     jobDsl scriptText: """
-                        multibranchPipelineJob("Node/devon4node_build_template") {
-                            description('Build job for devon4node template.')
+                        multibranchPipelineJob("${PROJECT_NAME}/${PROJECT_NAME_FULL}") {
+                            description('Build job for ${PROJECT_NAME_FULL}.')
                             branchSources {
                                 git {
-                                    remote("${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${params.GITLAB_CREATE_PROJECT_NAME}.git")
+                                    id('${UUID.randomUUID().toString()}')
+                                    remote('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git')
+                                    credentialsId('github-ci')
                                     includes('master release* develop')
                                 }
                             }
@@ -124,38 +226,90 @@ pipeline{
                             }
                         }
                         """
+                        
                     //Enable Job Security again
                     println "Enable job dsl security"
                     jenkinsConfiguration.enableJobDSLScriptSecurity()
                 }
             }
         }   
-        stage('Install nestjs/cli & cicdgen') {
+        stage('Install devon4node & cicdgen') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
             steps{
-             cleanWs()
-             deleteDir()
-                sh 'npm i -g @nestjs/cli @devonfw/cicdgen'
+                cleanWs()
+                deleteDir()
+                
+                sh 'sudo env "PATH=\$PATH" npm i -g @devon4node/cli @devonfw/cicdgen'
             }
         }     
-        stage('nest new') {
+        stage('devon4node new') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
             steps{
-                sh 'nest new devon4node -s -p yarn'
+                sh "devon4node new ${PROJECT_NAME_FULL} -n -s"
             }
         }       
         stage('Create cicdgen Node template') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
             steps{
-                dir("devon4node"){
-                    sh """git config user.email "jenkins@production-line.com" """
-                    sh """git config user.name "Jenkins" """
-                    sh "cicdgen generate devon4node --groupid com.devonfw"                                           
+                script{ 
+                    def dockerString = ''
+                    def ocString = ''
+
+                    if (params.DEPLOY == 'docker'){
+                        dockerString = "--docker --dockerurl ${env.DOCKER_URL} --registryurl ${env.REGISTRY_URL} "
+                        if (env.DOCKER_CERT) {
+                            dockerString += "--dockercertid ${env.DOCKER_CERT} "
+                        }
+                    }
+
+                    if (params.DEPLOY == 'openshift'){
+                        ocString = "--openshift --ocname ${env.OC_NAME} --registryurl ${env.REGISTRY_URL} "
+                    }
+                
+                    dir(PROJECT_NAME_FULL) {
+                        sh 'git config user.email "jenkins-pl@capgemini.com"'
+                        sh 'git config user.name "Jenkins"'
+                        sh "cicdgen generate devon4node ${ocString}${dockerString}--groupid ${params.GROUP_ID}"
+                    }
                 }
             }
         }
+
         stage('Pushing template to Gitlab') {
             steps{             
-                sh 'cd devon4node && git remote add origin http://${USERNAME}@gitlab-core:80/gitlab/${GITLAB_CREATE_GROUP_NAME}/${GITLAB_CREATE_PROJECT_NAME}.git && git push --set-upstream origin master'
+                script {
+                    dir(PROJECT_NAME_FULL){
+                        def token = GitLab.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
+                        sh "git status && git remote add origin http://oauth2:${token}@gitlab-core:80/gitlab/${GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git"
+                        sh "git checkout -b develop"
+                        
+                        def packageJson = readJSON file: 'package.json'
+                        packageJson.version = '0.0.1'
+                        writeJSON file: 'package.json', json: packageJson, pretty: 2
+                        
+                        sh """git add . && git commit -m "start 0.0.1 version" && git push --set-upstream origin develop"""
+                        sh "git checkout master && git push origin master"
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "master", "40", "30");
+                        gitlabConfiguration.unprotectBranch(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "develop");
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "develop", "30", "30");
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "release/*", "40", "30");
+                        gitlabConfiguration.protectBranches(params.GITLAB_CREATE_GROUP_NAME, PROJECT_NAME_FULL, "release", "40", "30");
+                    }    
+                }
             }
         }
+    }
 
+    post{
+        always{
+            cleanWs()
+            deleteDir()
+        }
     }
 }
