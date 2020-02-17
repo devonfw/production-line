@@ -50,8 +50,8 @@ pipeline {
                     //Add nodejs
                     //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
                     println "Trying to install nodejs config"
-                    String installName = "NodeJS 10.17.0"
-                    String nodeJS_Version = "10.17.0"
+                    String installName = "NodeJS 12.16.0"
+                    String nodeJS_Version = "12.16.0"
                     String npmPackages = "yarn"
                     String home = ""
                     long npmPackagesRefreshHours = 100

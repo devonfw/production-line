@@ -22,7 +22,7 @@ pipeline{
     }
     
     environment {
-        NODE_VERSION = '10.17.0'
+        NODE_VERSION = '12.16.0'
     }
 
     stages {
@@ -248,7 +248,7 @@ sudo chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 sudo apt-get update
 sudo apt-get install -y apt-transport-https
 sudo apt-get update
-sudo apt-get install -y dotnet-sdk-3.0
+sudo apt-get install -y dotnet-sdk-3.1
 fi""", '/usr/bin')
                 }
             }

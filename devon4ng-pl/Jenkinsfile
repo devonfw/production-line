@@ -22,7 +22,7 @@ pipeline{
     }
 
     environment {
-        NODE_VERSION = '10.17.0'
+        NODE_VERSION = '12.16.0'
     }
     
     stages {
