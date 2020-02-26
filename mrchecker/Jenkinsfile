@@ -81,7 +81,7 @@ pipeline{
                             params.GITLAB_CREATE_PROJECT_NAME, 
                             params.GITLAB_CREATE_PROJECT_DESCRIPTION, 
                             params.GITLAB_CREATE_BRANCH, 
-                            "https://github.com/devonfw/devonfw-testing.git",
+                            "https://github.com/devonfw/mrchecker.git",
                             "public"
                         )
                     }

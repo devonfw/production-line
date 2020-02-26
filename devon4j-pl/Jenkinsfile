@@ -27,7 +27,7 @@ pipeline{
     }
 
     environment {
-        NODE_VERSION = '12.16.0'
+        NODE_VERSION = '12.16.1'
     }
     
     stages {
@@ -74,7 +74,7 @@ pipeline{
                     long npmPackagesRefreshHours = 100
 
                     nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
-                    jdkInstallSuccess = jenkinsConfiguration.addJdkVersion("OpenJDK11", "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.5%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.5_10.tar.gz", "jdk-11.0.5+10")
+                    jdkInstallSuccess = jenkinsConfiguration.addJdkVersion("OpenJDK11", "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.6%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.6_10.tar.gz", "jdk-11.0.6+10")
 
                     // Get the Pl Url
                     env.PL_URL = JENKINS_URL.replace("https://", "").split("/")[0]
@@ -116,11 +116,11 @@ pipeline{
                 message 'Introduce the openshift host'
                 parameters {
                     string defaultValue: 'default', description: 'Openshift configuration name', name: 'OC_NAME', trim: true
-                    credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'nexus-devon', description: 'Nexus registry integration user credentials', name: 'DOCKER_REGISTRY_CREDENTIALS', required: true)
+                    credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'nexus-api', description: 'Nexus registry integration user credentials', name: 'DOCKER_REGISTRY_CREDENTIALS', required: true)
                 }
             }
             environment {
-                OPENJDK_TAG='jre-11.0.4_11-alpine'
+                OPENJDK_TAG='jre-11.0.6_10-alpine'
                 PORT='8080'
                 CPU='100m'
                 MEMORY='600Mi'
@@ -224,13 +224,8 @@ pipeline{
                                 git {
                                     id('${UUID.randomUUID().toString()}')
                                     remote('${ProductionLineGlobals.GITLAB_BASE_URL}/${params.GITLAB_CREATE_GROUP_NAME}/${PROJECT_NAME_FULL}.git')
-                                    credentialsId('github-ci')
+                                    credentialsId('')
                                     includes('master release* develop')
-                                }
-                            }
-                            orphanedItemStrategy {
-                                discardOldItems {
-                                    numToKeep(10)
                                 }
                             }
                         }
@@ -251,7 +246,7 @@ pipeline{
                 cleanWs()
                 deleteDir()
 
-                sh 'sudo env "PATH=\$PATH" npm i -g @devonfw/cicdgen'
+                sh 'sudo env "PATH=\$PATH" npm i -g @devonfw/cicdgen@1.5'
             }
         }
 
@@ -283,7 +278,7 @@ pipeline{
                 
                     dir(PROJECT_NAME_FULL){
                         sh 'git init'
-                        sh 'git config user.email "jenkins-pl@capgemini.com"'
+                        sh 'git config user.email "jenkins-pl@example.com"'
                         sh 'git config user.name "Jenkins"'
                         sh "cicdgen generate devon4j ${ocString}${dockerString}"
                     }

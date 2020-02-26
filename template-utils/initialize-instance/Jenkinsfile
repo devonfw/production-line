@@ -96,7 +96,7 @@ fi""", "/usr/bin")
                         println "SonarQube webhook already added"
                     }
                     // Install sonarqube plugins
-                    def sonarPlugins = ['java', 'javascript', 'typescript', 'csharp', 'web', 'cssfamily', 'jacoco', 'checkstyle', 'cobertura', 'smells', 'findbugs', 'scmgit', 'ansible']
+                    def sonarPlugins = ['java', 'javascript', 'typescript', 'csharp', 'web', 'cssfamily', 'jacoco', 'checkstyle', 'cobertura', 'smells', 'findbugs', 'scmgit', 'ansible', 'devon4j']
 
                     sonarPlugins.each {
                         try { 
@@ -143,9 +143,6 @@ fi""", "/usr/bin")
                     jobDsl scriptText: """
                         pipelineJob("UTILS/Install_SonarQube_Plugin") {
                             description('Install a plugin in the SonarQube')
-                            parameters {
-                                stringParam('plugin_download_url', '', 'Download URL for the plugin to install')
-                            }
                             definition {
                                 cpsScm {
                                     scm {
@@ -169,9 +166,6 @@ fi""", "/usr/bin")
                         jobDsl scriptText: """
                             pipelineJob("UTILS/Docker_Configuration") {
                                 description('Configure jenkins to deploy using Docker')
-                                parameters {
-                                    stringParam('NEW_DOCKER_HOST', 'tcp://127.0.0.1:2375', 'Remote docker url')
-                                }
                                 definition {
                                     cpsScm {
                                         scm {
@@ -195,17 +189,6 @@ fi""", "/usr/bin")
                         jobDsl scriptText: """
                             pipelineJob("UTILS/Openshift_Configuration") {
                                 description('Configure jenkins to deploy using Openshift')
-                                parameters {
-                                    stringParam('ocName', 'default', 'Openshift configuration name')
-                                    stringParam('ocUrl', 'https://ocp.itaas.s2-eu.capgemini.com', 'Openshift url')
-                                    stringParam('ocProject', 's2portaldev', 'Openshift project')
-                                    credentialsParam('ocToken') {
-                                        type('com.openshift.jenkins.plugins.OpenShiftTokenCredentials')
-                                        required()
-                                        defaultValue('')
-                                        description('The openshift auth token. You can get it with the command: oc whoami -t')
-                                    }
-                                }
                                 definition {
                                     cpsScm {
                                         scm {
