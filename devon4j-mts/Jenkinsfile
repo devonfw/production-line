@@ -50,14 +50,14 @@ pipeline {
                     //Add nodejs
                     //public boolean addNodeJS_Version(String installName, String nodeJS_Version, String npmPackages="", String home="", long npmPackagesRefreshHours=100) {
                     println "Trying to install nodejs config"
-                    String installName = "NodeJS 12.16.0"
-                    String nodeJS_Version = "12.16.0"
+                    String installName = "NodeJS 12.16.1"
+                    String nodeJS_Version = "12.16.1"
                     String npmPackages = "yarn"
                     String home = ""
                     long npmPackagesRefreshHours = 100
 
                     nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
-                    jdkInstallSuccess = jenkinsConfiguration.addJdkVersion("OpenJDK11", "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.5%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.5_10.tar.gz", "jdk-11.0.5+10")
+                    jdkInstallSuccess = jenkinsConfiguration.addJdkVersion("OpenJDK11", "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.6%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.6_10.tar.gz", "jdk-11.0.6+10")
                     dependencyCheckConfig.installDependencyCheck('dependency-check', '5.2.4','')
 
                     //Add the required script approval
@@ -194,7 +194,7 @@ pipeline {
                                     defaultValue('nexus-api')
                                     description('registry credentials')
                                 }
-                                stringParam('registryUrl', 'https://docker-registry-devon.s2-eu.capgemini.com', 'docker registry url')
+                                stringParam('registryUrl', 'REPLACE_ME', 'docker registry url')
                                 stringParam('VERSION', '3.2.0', 'Version number')
                                 stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
                             }
@@ -228,7 +228,7 @@ pipeline {
                                     defaultValue('nexus-api')
                                     description('registry credentials')
                                 }
-                                stringParam('registryUrl', 'https://docker-registry-devon.s2-eu.capgemini.com', 'docker registry url')
+                                stringParam('registryUrl', 'REPLACE_ME', 'docker registry url')
                                 stringParam('VERSION', '3.2.0', 'Version number')
                                 stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
                             }
@@ -263,7 +263,7 @@ pipeline {
                                     description('registry credentials')
                                 }
                                 booleanParam('buildReverseProxy', false, 'Build again the reverse proxy image?')
-                                stringParam('registryUrl', 'https://docker-registry-devon.s2-eu.capgemini.com', 'docker registry url')
+                                stringParam('registryUrl', 'REPLACE_ME', 'docker registry url')
                                 stringParam('VERSION', '3.2.0', 'Version number')
                                 stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
                             }
