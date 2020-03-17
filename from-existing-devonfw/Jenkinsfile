@@ -1,0 +1,370 @@
+@Library('ProductionLineTemplateLib')
+
+import com.capgemini.productionline.configuration.*
+
+JenkinsConfiguration jenkinsConfiguration = new JenkinsConfiguration(this);
+GitLab gitlabConfiguration;
+OpenshiftConfiguration openshiftConfiguration = new OpenshiftConfiguration(this);
+
+pipeline{
+    
+    agent any
+
+    //Jenkins Job Parameters
+    parameters { 
+
+        // string(name: 'GROUP_ID', defaultValue: 'com.devonfw', description: 'The group id of the project.')
+        string(name: 'REPOSITORY_URL', defaultValue: 'REPLACE_ME', description: 'The internal repository URL. Without protocol.')
+        string(name: 'GIT_BRANCH', defaultValue: 'develop', description: 'The branch where you want to apply the CICD changes')
+        choice choices: ['error', 'keep', 'override', 'combine'], description: 'Choose the merge strategy for cicdgen.', name: 'MERGE_STRATEGY'    
+        credentials(credentialType: 'com.dabsquared.gitlabjenkins.connection.GitLabApiTokenImpl', defaultValue: 'gitlab-api-token', description: 'NEEDS TO BE SET!. Private Token of a Production Line Gitlab User that can be used to create repositories.', name: 'GITLAB_USER_PRIVATE_TOKEN', required: true)
+        choice choices: ['none', 'docker', 'openshift'], description: 'Choose the environment where you want to deploy', name: 'DEPLOY'    
+    }
+
+    environment {
+        NODE_VERSION = '12.16.1'
+    }
+    
+    stages {
+        stage('Clone') {
+            steps {
+                script {
+                    dir('project') {
+                        def token = GitLab.gitlabApiToken(GITLAB_USER_PRIVATE_TOKEN);
+                        gitlabConfiguration = new GitLab(this, token, ProductionLineGlobals.GITLAB_BASE_URL);
+
+                        FULL_GITLAB_URL = 'http://oauth2:' + token + '@' + REPOSITORY_URL.replace('http://', '').replace('https://', '').replace('.git', '') + '.git'
+                        git branch: params.GIT_BRANCH, url: FULL_GITLAB_URL
+                    }
+                }
+            }
+        }
+
+        stage('Analyze project'){
+            steps {
+                script {
+                    dir('project') {
+                        PROJECT_TYPE = 'error'
+                        def repoParts = REPOSITORY_URL.replace('.git','').split('/')
+                        PROJECT_NAME_FULL = repoParts[-1]
+                        PROJECT_GROUP_NAME = repoParts[-2]
+                        PROJECT_NAME = PROJECT_NAME_FULL.split('-')[0]
+                        if(fileExists('pom.xml')) {
+                            PROJECT_TYPE = 'devon4j'
+                        } else if (fileExists('package.json')) {
+                            def packageContent = readFile 'package.json'
+                            if (packageContent.contains('@angular/core')) {
+                                PROJECT_TYPE = 'devon4ng'
+                            }
+
+                            if (packageContent.contains('@nestjs/core')) {
+                                PROJECT_TYPE = 'devon4node'
+                            }
+                        } else if (fileExists('devon4net.sln')) {
+                            PROJECT_TYPE = 'devon4net'
+                        }
+
+                        if (PROJECT_TYPE == 'error') {
+                            error "Your repository do not contains any devonfw project."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('PL Setup'){
+            steps {
+                script {
+                    dir('project') {
+                        if (params.DEPLOY == 'openshift' && jenkinsConfiguration.getLastStableBuild('UTILS/Openshift_Configuration') == null) {
+                            error "In order to deploy using openshift, you need to execute the job UTILS/Openshift_Configuration as prerequisite"
+                        }
+
+                        println "Trying to install all required plugins"
+                        //Install the required Jenkins plugins
+                        //The template currently requires the following plugins to be present
+                        def pluginsToInstall = ["ssh-credentials", "custom-tools-plugin", "http_request", "job-dsl", "sonar", "ansible", "pipeline-maven", "nodejs", "gitlab-plugin"]
+                        
+                        if (params.DEPLOY == 'docker') {
+                            pluginsToInstall << "docker-plugin" << "docker-build-step" << "docker-workflow" << "jclouds-jenkins"
+                        }
+
+                        if (params.DEPLOY == 'openshift') {
+                            pluginsToInstall << 'openshift-client'
+                        }
+
+                        def pluginsHaveBeenInstalled = jenkinsConfiguration.installPlugin(pluginsToInstall)
+                        
+                        if( pluginsHaveBeenInstalled ) {
+                            println "New plugins were installed - Restart"
+                            // We need to restart Jenkins in case new plugins have been installed.
+                            //if set to false, then do a force restart
+                            //still requires to manually start the job again afterwards
+                            jenkinsConfiguration.restartJenkins(false);
+                            error "Restarting Jenkins, please execute pipeline after restart"
+                        } else {
+                            println "No plugins were installed"
+                        }
+
+                        //Add nodejs
+                        println "Trying to install nodejs config"
+                        String installName = "NodeJS ${NODE_VERSION}"
+                        String nodeJS_Version = NODE_VERSION
+                        String npmPackages = "yarn"
+                        String home = ""
+                        long npmPackagesRefreshHours = 100
+
+                        nodeJSInstallSuccess = jenkinsConfiguration.addNodeJS_Version(installName, nodeJS_Version, npmPackages, home, npmPackagesRefreshHours)
+                        if (PROJECT_TYPE == 'devon4j') {
+                            jdkInstallSuccess = jenkinsConfiguration.addJdkVersion("OpenJDK11", "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.6%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.6_10.tar.gz", "jdk-11.0.6+10")
+                        }
+                        if (PROJECT_TYPE == 'devon4net') {
+                            jenkinsConfiguration.addCustomTool('dotnet', '', """if ! which dotnet > /dev/null; then
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
+sudo mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+wget -q https://packages.microsoft.com/config/debian/10/prod.list
+sudo mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+sudo chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+sudo chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+sudo apt-get update
+sudo apt-get install -y apt-transport-https
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-3.1
+fi""", '/usr/bin')
+                        }
+
+                        // Get the Pl Url
+                        env.PL_URL = JENKINS_URL.replace("https://", "").split("/")[0]
+                        env.REGISTRY_URL = 'docker-registry-' + env.PL_URL
+                        
+                        //Add the required script approval
+                        println "Adding required script approvals in Jenkins"
+                        jenkinsConfiguration.approveSignature("method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object")
+                    }
+                }
+            }
+        }
+
+        stage('Configuring DOCKER'){
+            when {
+                beforeInput true
+                equals expected: 'docker', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the docker host'
+                parameters {
+                    string defaultValue: 'tcp://127.0.0.1:2763', description: 'The remote docker daemon URL', name: 'DOCKER_URL', trim: true
+                    credentials(credentialType: 'org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials', description: 'Credentials to access docker daemon', name: 'DOCKER_CERT', required: true)
+                }
+            }
+            steps {
+                script {
+                    env.DOCKER_URL = DOCKER_URL
+                    env.DOCKER_CERT = DOCKER_CERT
+                }
+            }
+        }
+        
+        stage('Configuring Openshift'){
+            when {
+                beforeInput true
+                equals expected: 'openshift', actual: params.DEPLOY
+            }
+            input {
+                message 'Introduce the openshift host'
+                parameters {
+                    string defaultValue: 'default', description: 'Openshift configuration name', name: 'OC_NAME', trim: true
+                    credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'nexus-api', description: 'Nexus registry integration user credentials', name: 'DOCKER_REGISTRY_CREDENTIALS', required: true)
+                }
+            }
+            tools {
+                oc 'OpenShiftv3.11.0'
+            }
+            steps {
+                script {
+                    if(!openshiftConfiguration.existsOpenshiftGlobalConfiguration(OC_NAME)) {
+                        error "Cluster configuration called ${OC_NAME} does not exists, please create it. You can use the UTILS/Openshift_Configuration template."
+                    }
+                    env.OC_NAME = OC_NAME
+
+                    env.SECRET_NAME = "docker-registry-" + env.PL_URL.split("\\.")[0]
+
+                    openshift.withCluster(env.OC_NAME){
+                        openshift.withProject() {
+                            // Create secret if not exist
+                            def secret = openshift.selector('secret', "${env.SECRET_NAME}")
+                            if (!secret.exists()) {
+                                echo "secret not exist"
+                                withCredentials([usernamePassword(credentialsId: "${DOCKER_REGISTRY_CREDENTIALS}", passwordVariable: 'drpass', usernameVariable: 'druser')]) {
+                                    openshift.create('secret', "docker-registry ${env.SECRET_NAME} --docker-server=${env.REGISTRY_URL} --docker-username=${druser} --docker-password=${drpass} --docker-email=no-reply@email.com")
+                                }
+                            }
+
+                            if (PROJECT_TYPE == 'devon4node') {
+                                def PORT='3000'
+                                def CPU='100m'
+                                def MEMORY='512Mi'
+
+                                sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4node/devon4node.yaml"""
+
+                                // Create environments for dev, uat and prod
+                                openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=develop"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=uat"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4node.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-stage", "-p", "NODE_TAG=${NODE_VERSION}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}", "-p", "NODE_ENV=production"  ) )
+                            }
+
+                            if (PROJECT_TYPE == 'devon4j') {
+                                def OPENJDK_TAG='jre-11.0.6_10-alpine'
+                                def PORT='8080'
+                                def CPU='100m'
+                                def MEMORY='600Mi'
+
+
+                                sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4j/devon4j.yaml"""
+
+                                // Create environments for dev, uat and prod
+                                openshift.create( openshift.process( '', '-f', 'devon4j.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "OPENJDK_TAG=${OPENJDK_TAG}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4j.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "OPENJDK_TAG=${OPENJDK_TAG}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4j.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-stage", "-p", "OPENJDK_TAG=${OPENJDK_TAG}", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                            }
+
+                            if (PROJECT_TYPE == 'devon4net') {
+                                def PORT='8082'
+                                def CPU='100m'
+                                def MEMORY='400Mi'
+
+                                sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4net/devon4net.yaml"""
+
+                                // Create environments for dev, uat and prod
+                                openshift.create( openshift.process( '', '-f', 'devon4net.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4net.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4net.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-stage", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+
+                            }
+
+                            if (PROJECT_TYPE == 'devon4ng') {
+                                def PORT='8080'
+                                def CPU='100m'
+                                def MEMORY='400Mi'
+
+                                sh """wget https://raw.githubusercontent.com/devonfw/devonfw-shop-floor/develop/dsf4openshift/configure-environments/devon4ng/devon4ng.yaml"""
+
+                                // Create environments for dev, uat and prod
+                                openshift.create( openshift.process( '', '-f', 'devon4ng.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-dev", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=latest", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4ng.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-uat", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=release", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                                openshift.create( openshift.process( '', '-f', 'devon4ng.yaml', "-p", "APPLICATION_NAME=${PROJECT_NAME_FULL}", "-p", "APPLICATION_GROUP_NAME=${PROJECT_NAME}", "-p", "APPLICATION_NAME_SUFFIX=-stage", "-p", "DOCKER_IMAGE=${env.REGISTRY_URL}/${PROJECT_NAME_FULL}", "-p", "DOCKER_TAG=production", "-p", "SECRET=${env.SECRET_NAME}", "-p", "CPU=${CPU}", "-p", "MEMORY=${MEMORY}", "-p", "PORT=${PORT}"  ) )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Generate template job'){
+            steps{
+                println "Trying to create Jenkins jobs"
+                script{
+                    if (!jenkinsConfiguration.existsJob("${PROJECT_NAME}/${PROJECT_NAME_FULL}")) {
+                        //Disable Job Security
+                        println "Disable job dsl security"
+                        jenkinsConfiguration.disableJobDSLScriptSecurity()
+
+                        //Prepare folders in Jenkins for the jobs
+                        println "Trying to create folder for jobs"
+                        jobDsl scriptText: """
+                            folder("${PROJECT_NAME}"){
+                                description('Jobs for ${PROJECT_NAME} project.')
+                            }
+                            """
+
+                        //Build job
+                        println "Trying to create Build job"
+                        jobDsl scriptText: """
+                            multibranchPipelineJob("${PROJECT_NAME}/${PROJECT_NAME_FULL}") {
+                                description('Build job for ${PROJECT_NAME_FULL}.')
+                                branchSources {
+                                    git {
+                                        id('${UUID.randomUUID().toString()}')
+                                        remote('${FULL_GITLAB_URL}')
+                                        credentialsId('')
+                                        includes('master release* develop')
+                                    }
+                                }
+                            }
+                            """
+                            
+                        //Enable Job Security again
+                        println "Enable job dsl security"
+                        jenkinsConfiguration.enableJobDSLScriptSecurity()
+                    }
+                }
+            }
+        }   
+        stage('Install cicdgen') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
+            steps{
+                sh 'sudo env "PATH=\$PATH" npm i -g @devonfw/cicdgen@1.6'
+            }
+        }
+
+        stage('Create cicdgen template') {
+            tools {
+                nodejs "NodeJS ${NODE_VERSION}"
+            }
+            steps{
+                script{ 
+                    dir('project'){
+                        def dockerString = ''
+                        def ocString = ''
+                        def otherParamsString = '--merge ' + params.MERGE_STRATEGY + ' '
+
+                        if (params.DEPLOY == 'docker'){
+                            dockerString = "--docker --dockerurl ${env.DOCKER_URL} --registryurl ${env.REGISTRY_URL} "
+                            if (env.DOCKER_CERT) {
+                                dockerString += "--dockercertid ${env.DOCKER_CERT} "
+                            }
+                        }
+
+                        if (params.DEPLOY == 'openshift'){
+                            ocString = "--openshift --ocname ${env.OC_NAME} --registryurl ${env.REGISTRY_URL} "
+                        }
+
+                        if (PROJECT_TYPE == 'devon4ng' || PROJECT_TYPE == 'devon4node' || PROJECT_TYPE == 'devon4net') {
+                            otherParamsString += '--groupid com.capgemini '
+
+                            if (PROJECT_TYPE == 'devon4net') {
+                                otherParamsString += "--appname ${PROJECT_NAME_FULL} --appversion 0.0.1 "
+                            }
+                        }
+                    
+                        sh 'git config user.email "jenkins-pl@example.com"'
+                        sh 'git config user.name "Jenkins"'
+                        sh "cicdgen generate ${PROJECT_TYPE} ${ocString}${dockerString}${otherParamsString}"
+                    }
+                }
+            }
+        }
+
+        stage('Pushing template to Gitlab') {
+            steps{             
+                script {
+                    dir('project'){
+                        gitlabConfiguration.createWebhook(PROJECT_GROUP_NAME, PROJECT_NAME_FULL, "http://jenkins-core:8080/jenkins/project/${PROJECT_NAME}/${PROJECT_NAME_FULL}", '')
+
+                        sh """git push --set-upstream origin ${params.GIT_BRANCH}"""
+                    }    
+                }
+            }
+        }
+        
+    }
+
+    post{
+        always{
+            cleanWs()
+            deleteDir()
+        }
+    }
+}

@@ -20,7 +20,7 @@ image::images/devon4node-pl/devonfw.png[400,300]
 
 = devon4node Template for Production Line
 
-=== Overview
+== Overview
 
 This template will configure your PL instance to have a 'ready to use' devon4node template. It can be used as a starting point for your Node projects. +
 This includes CICD files for a devonfw technology stack with configuration for:

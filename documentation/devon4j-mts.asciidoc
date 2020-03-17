@@ -21,7 +21,7 @@ toc::[]
 
 Please read all of the following sections carefully.
 
-=== Overview
+== Overview
 
 This template will configure your PL instance to have a 'ready to use' My-Thai-Star devonfw application. It is only an example. In order to start a new project, please use the other templates. This includes:
 
