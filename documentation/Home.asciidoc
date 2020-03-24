@@ -24,7 +24,9 @@ This repository contains a collection of templates that can be used inside a Pro
 - link:how-to-add-a-template.asciidoc[How to add a Template to your PL instance]
 - link:devon4j-pl.asciidoc[devon4j Template]
 - link:devon4ng-pl.asciidoc[devon4ng Template]
+- link:devon4net-pl.asciidoc[devon4net Template]
 - link:devon4node-pl.asciidoc[devon4node Template]
+- link:from-existing-devonfw.asciidoc[From existing devonfw Template]
 
 == Utility Templates
 

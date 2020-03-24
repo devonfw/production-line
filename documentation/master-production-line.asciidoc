@@ -29,7 +29,11 @@ include::devon4j-pl[leveloffset=2]
 
 include::devon4ng-pl[leveloffset=2]
 
+include::devon4net-pl[leveloffset=2]
+
 include::devon4node-pl[leveloffset=2]
+
+include::from-existing-devonfw[leveloffset=2]
 
 == Utility Templates
 

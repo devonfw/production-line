@@ -20,7 +20,7 @@ image::images/devon4j-pl/devonfw.png[400,300]
 
 = devon4j Template for Production Line
 
-=== Overview
+== Overview
 
 This template will configure your PL instance to have a 'ready to use' devon4j template. It can be used as a starting point for your Java projects. +
 This includes CICD files for a devonfw technology stack with configuration for:

@@ -187,17 +187,6 @@ pipeline {
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_FRONTEND_DEPLOY") {
                             description('Deploy job for MyThaiStar Frontend Only.')
-                            parameters {
-                                credentialsParam('registryCredentialsId') {
-                                    type('com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
-                                    required()
-                                    defaultValue('nexus-api')
-                                    description('registry credentials')
-                                }
-                                stringParam('registryUrl', 'REPLACE_ME', 'docker registry url')
-                                stringParam('VERSION', '3.2.0', 'Version number')
-                                stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
-                            }
                             definition {
                                 cpsScm {
                                     scm {
@@ -221,17 +210,6 @@ pipeline {
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_SERVER_DEPLOY") {
                             description('Deploy job for MyThaiStar Backend only.')
-                            parameters {
-                                credentialsParam('registryCredentialsId') {
-                                    type('com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
-                                    required()
-                                    defaultValue('nexus-api')
-                                    description('registry credentials')
-                                }
-                                stringParam('registryUrl', 'REPLACE_ME', 'docker registry url')
-                                stringParam('VERSION', '3.2.0', 'Version number')
-                                stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
-                            }
                             definition {
                                 cpsScm {
                                     scm {
@@ -255,18 +233,6 @@ pipeline {
                     jobDsl scriptText: """
                         pipelineJob("${params.JENKINS_FOLDER}/MyThaiStar_REVERSE-PROXY_DEPLOY") {
                             description('Deployment Pipeline for both Frontend and Backend at the same time.')
-                            parameters {
-                                credentialsParam('registryCredentialsId') {
-                                    type('com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
-                                    required()
-                                    defaultValue('nexus-api')
-                                    description('registry credentials')
-                                }
-                                booleanParam('buildReverseProxy', false, 'Build again the reverse proxy image?')
-                                stringParam('registryUrl', 'REPLACE_ME', 'docker registry url')
-                                stringParam('VERSION', '3.2.0', 'Version number')
-                                stringParam('dockerNetwork', 'my-thai-star', 'The docker network for the deployed container')
-                            }
                             definition {
                                 cpsScm {
                                     scm {

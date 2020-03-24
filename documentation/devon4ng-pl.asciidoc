@@ -20,7 +20,7 @@ image::images/devon4ng-pl/devonfw.png[400,300]
 
 = devon4ng Template for Production Line
 
-=== Overview
+== Overview
 
 This template will configure your PL instance to have a 'ready to use' devon4ng template. It can be used as a starting point for your Angular projects. +
 This includes CICD files for a devonfw technology stack with configuration for:
