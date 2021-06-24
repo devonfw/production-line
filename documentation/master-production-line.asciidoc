@@ -6,7 +6,7 @@ This repository contains a collection of templates that can be used inside a Pro
 
 * Go to Jenkins.
 * On the upper left click on "New Element" to create a new Jenkins job.
-* Chose a name for the job such as "MTS-template-seed-job". The job type has to be "Pipeline". Click on ok. 
+* Select a name for the job such as "MTS-template-seed-job". The job type has to be "Pipeline". Click on ok. 
 
 image::./images/newjenkinsjob.PNG[]
 
