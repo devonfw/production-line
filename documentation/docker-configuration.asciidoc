@@ -72,6 +72,6 @@ Then, you can see that the docker is configured and the remote docker daemon env
 image::images/docker-configuration/docker-env-var.png[]
 image::images/docker-configuration/docker-custom-tool.png[]
 
-The environment variable is setted globally, if you want to use another remote docker daemon for a specific build, you can override the `DOCKER_HOST` environment variable in your job.
+The environment variable is configured globally, if you want to use another remote docker daemon for a specific build, you can override the `DOCKER_HOST` environment variable in your job.
 
-If the `DOCKER_HOST` is already setted globally, when you execute again this template the value will not be changed. You need to change the value manually at: Jenkins -> Manage Jenkins -> Configure System -> Global properties
+If the `DOCKER_HOST` is already configured globally, when you execute again this template the value will not be changed. You need to change the value manually at: Jenkins -> Manage Jenkins -> Configure System -> Global properties
