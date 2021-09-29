@@ -88,7 +88,7 @@ After executing this template, you will have:
 ** The repository name is _PROJECT_NAME_-_PROJECT_SUFFIX_
 ** The repository contains a clean devon4net project.
 ** The repository contains a Jenkinsfile.
-** The repository has already setted the jenkins webhook.
+** The repository has already configured the jenkins webhook.
 ** The repository protects the branches master and release/* to only maintainers to push. Develop is the default branch.
 * A new multibranch pipeline in jenkins inside the folder _PROJECT_NAME_ with the name _PROJECT_NAME_-_PROJECT_SUFFIX_. As the webhook is already configured, it should be executed on every push to GitLab repository.
 * If you choose docker for deployment, your Jenkinsfile should contain two extra stages in order to build and deploy the docker image. Also, the repository should contain the Dockerfiles to create the docker images.

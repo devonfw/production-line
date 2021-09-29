@@ -39,7 +39,7 @@ In this specific case the problem is the `Allure` plugin is not installed. Just 
 
 == Build Now instead Build with Parameters
 
-Sometimes, when you go to execute a template, mostly the first time, the `Build Now` button is available instead `Build with Parameters` buttom. The root cause of this problem is the parameters are defined in the `Jenkinsfile` and, as you never execute it before, Jenkins do not have those `Jenkinsfile` yet. For this reason it does not knows the parameters required.
+Sometimes, when you go to execute a template, mostly the first time, the `Build Now` button is available instead `Build with Parameters` button. The root cause of this problem is the parameters are defined in the `Jenkinsfile` and, as you never execute it before, Jenkins do not have those `Jenkinsfile` yet. For this reason it does not knows the parameters required.
 
 To solve this problem, you only need to press the `Build Now` button. Then, the execution will start and fail. It's not a problem as you do not enter any parameter. Now you only need to reload the page and the `Build with Parameters` button will be available.
 

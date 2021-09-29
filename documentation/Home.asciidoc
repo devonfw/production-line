@@ -30,7 +30,7 @@ This repository contains a collection of templates that can be used inside a Pro
 
 == Utility Templates
 
-- link:inialize-instance.asciidoc[Initialize Instance Template]
+- link:initialize-instance.asciidoc[Initialize Instance Template]
 - link:install-sonar-plugin.asciidoc[Install SonarQube Plugin Template]
 - link:docker-configuration.asciidoc[Docker Configuration Template]
 - link:openshift-configuration.asciidoc[OpenShift Configuration Example]
@@ -45,4 +45,4 @@ This repository contains a collection of templates that can be used inside a Pro
 
 == Troubleshooting
 
-- link:troutbleshoot.asciidoc[Troubleshooting]
+- link:troubleshoot.asciidoc[Troubleshooting]

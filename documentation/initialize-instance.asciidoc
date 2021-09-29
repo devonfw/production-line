@@ -160,7 +160,7 @@ This stage will configure the Production Line Nexus3
 ** Create in Jenkins a new credential with the id `nexus-api` with the username and password created in nexus3
 * Configure Maven File stage
 +
-This stage adds the nexus3 credentials creadted in the previous stage to the maven global configuration file with the id `pl-nexus`
+This stage adds the nexus3 credentials created in the previous stage to the maven global configuration file with the id `pl-nexus`
 +
 image::images/initialize-instance/maven-config.png[]
 

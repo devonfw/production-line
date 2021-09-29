@@ -37,7 +37,7 @@ This template will configure your PL instance to have a 'ready to use' My-Thai-S
 
 * Adding a deployment job for the reverse proxy. Please see link:https://devonfw.com/website/pages/docs/master-my-thai-star.asciidoc_cicd.html#deployment.asciidoc[My Thai Star deployment documentation]
 
-Especially the build and delpoyment jobs require several additional Jenkins plugins, which are not part of the PL by default. The Template will also take care of those installations.
+Especially the build and deployment jobs require several additional Jenkins plugins, which are not part of the PL by default. The Template will also take care of those installations.
 
 All build and deployment jobs are taken from the official `My-Thai-Star` (https://github.com/devonfw/my-thai-star) repository. The created build and deployment jobs inside Jenkins will use the Jenkinsfiles from the cloned repo in Gitlab. These are currently the following Jenkinsfiles:
 
@@ -49,9 +49,9 @@ All build and deployment jobs are taken from the official `My-Thai-Star` (https:
 | Jenkins job name | Path to Jenkinsfile in repo | Description 
 | MyThaiStar_FRONTEND_BUILD | jenkins/angular/cicd/Jenkinsfile | Builds and tests the Angular frontend. Pushes artifacts to Nexus.
 | MyThaiStar_SERVER_BUILD | jenkins/java/cicd/Jenkinsfile | Builds and tests the Java backend. Pushes artifacts to Nexus.
-| MyThaiStar_FRONTEND_DEPLOY |  jenkins/angular/deployment/Jenkinsfile | Frontend deployment job. Downloads the docker images from Nexus3 and starts a new container usign that image.
-| MyThaiStar_SERVER_DEPLOY |  jenkins/java/deployment/Jenkinsfile | Backend deployment job. Downloads the docker images from Nexus3 and starts a new container usign that image.
-| MyThaiStar_REVERSE-PROXY_DEPLOY | jenkins/deployment/Jenkinsfile | Reverse proxy deployment job. Downloads the docker images from Nexus3 and starts a new container usign that image. With this job you can also build the reverse proxy image.
+| MyThaiStar_FRONTEND_DEPLOY |  jenkins/angular/deployment/Jenkinsfile | Frontend deployment job. Downloads the docker images from Nexus3 and starts a new container using that image.
+| MyThaiStar_SERVER_DEPLOY |  jenkins/java/deployment/Jenkinsfile | Backend deployment job. Downloads the docker images from Nexus3 and starts a new container using that image.
+| MyThaiStar_REVERSE-PROXY_DEPLOY | jenkins/deployment/Jenkinsfile | Reverse proxy deployment job. Downloads the docker images from Nexus3 and starts a new container using that image. With this job you can also build the reverse proxy image.
 |====================
 
 
@@ -71,7 +71,7 @@ In case you see improvements we would love to see a Pull Request.
 
 * Jenkins (required to run the template and to execute the build/deployment Jobs)
 * SonarQube (required for a static code analysis)
-* GitLab (required as a repostiory)
+* GitLab (required as a repository)
 * Nexus3 (required to store the build artifacts)
 
 [TIP]
@@ -172,7 +172,7 @@ When everything is "green" the template is done and you can have a look in the c
 
 [IMPORTANT]
 ====
-It will take a few minutes to clone the official MTS repository to the internal Gitlab. So you need to wait before executing the build jobs at the frist time.
+It will take a few minutes to clone the official MTS repository to the internal Gitlab. So you need to wait before executing the build jobs at the first time.
 ====
 
 ==== Build Jobs
@@ -181,7 +181,7 @@ You can now execute the build for the frontend and also the backend. They do not
 
 ==== Deployment Jobs
 
-All deployment jobs have several parameters configured in their Jenkinsfile. Unfortunately, Jenkins does not pick them up immediatly, *so you need to execute the job once, by pressing the "Build now" button.* 
+All deployment jobs have several parameters configured in their Jenkinsfile. Unfortunately, Jenkins does not pick them up immediately, *so you need to execute the job once, by pressing the "Build now" button.* 
 The run should fail quite fast and once you refresh the page, the "Build now" button should have changed to "Build with Parameters". If you now click on the button you should see the parameters below:
 
 image::./images/devon4j-mts/JenkinsDeployParameters.png[Jenkins Deployment Parameters]

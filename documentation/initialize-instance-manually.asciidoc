@@ -125,7 +125,7 @@ image::./images/devon4j-mts/sonaraccount.PNG[600,500]
 
 ==== Install SonarQube plugins from Marketplace
 
-In order to analyce devonfw projects in SonarQube properly, you need to install manually some plugins. To do that you only need to open your SonarQube website and go to Administration -> Marketplace. Then, you need to install the following plugins:
+In order to analyze devonfw projects in SonarQube properly, you need to install manually some plugins. To do that you only need to open your SonarQube website and go to Administration -> Marketplace. Then, you need to install the following plugins:
 
 - Checkstyle
 - Cobertura
